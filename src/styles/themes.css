@@ -1,0 +1,94 @@
+/* ──────────────────────────────────────────────────────────────────
+   AuraLoop theme palettes
+   Each palette publishes the same set of CSS variables so every
+   component can reference them via Tailwind tokens (theme.*).
+   Switch palette by setting [data-theme] on <html>.
+   ────────────────────────────────────────────────────────────────── */
+
+:root,
+[data-theme="default"] {
+  /* surfaces */
+  --t-bg:        #F5F1E8;   /* page background — cream */
+  --t-bg-soft:   #FBF7EE;   /* alt page section */
+  --t-card:      #FFFFFF;   /* card */
+  --t-card-soft: #FFFDF7;   /* slightly tinted card */
+
+  /* ink */
+  --t-ink:       #0F172A;
+  --t-ink-muted: #475569;
+  --t-ink-dim:   #64748B;
+  --t-ink-faint: #94A3B8;
+  --t-line:      #0F172A;        /* heavy outline */
+  --t-line-soft: rgba(15,23,42,0.12);
+
+  /* brand palette */
+  --t-primary:   #F5C842;   /* mustard */
+  --t-secondary: #5DD3CB;   /* teal */
+  --t-accent:    #FF8C7A;   /* coral */
+  --t-lilac:     #C4B5FD;   /* lavender */
+  --t-success:   #86EFAC;
+  --t-danger:    #EF4444;
+
+  /* glow used for hover ring on cards */
+  --t-glow: 245, 200, 66;        /* mustard rgb */
+}
+
+[data-theme="lavender"] {
+  --t-bg:        #F1ECFA;
+  --t-bg-soft:   #F7F3FE;
+  --t-card:      #FFFFFF;
+  --t-card-soft: #FBF8FF;
+  --t-ink:       #0F172A;
+  --t-ink-muted: #475569;
+  --t-ink-dim:   #64748B;
+  --t-ink-faint: #94A3B8;
+  --t-line:      #0F172A;
+  --t-line-soft: rgba(15,23,42,0.12);
+  --t-primary:   #C4B5FD;
+  --t-secondary: #FBCFE8;
+  --t-accent:    #5DD3CB;
+  --t-lilac:     #F5C842;
+  --t-success:   #86EFAC;
+  --t-danger:    #EF4444;
+  --t-glow: 196, 181, 253;
+}
+
+[data-theme="sunset"] {
+  --t-bg:        #FFF1EC;
+  --t-bg-soft:   #FFF7F2;
+  --t-card:      #FFFFFF;
+  --t-card-soft: #FFFAF6;
+  --t-ink:       #0F172A;
+  --t-ink-muted: #475569;
+  --t-ink-dim:   #64748B;
+  --t-ink-faint: #94A3B8;
+  --t-line:      #0F172A;
+  --t-line-soft: rgba(15,23,42,0.12);
+  --t-primary:   #FF8C7A;
+  --t-secondary: #F5C842;
+  --t-accent:    #C4B5FD;
+  --t-lilac:     #5DD3CB;
+  --t-success:   #86EFAC;
+  --t-danger:    #EF4444;
+  --t-glow: 255, 140, 122;
+}
+
+[data-theme="mint"] {
+  --t-bg:        #ECFAF6;
+  --t-bg-soft:   #F4FCF9;
+  --t-card:      #FFFFFF;
+  --t-card-soft: #F8FFFC;
+  --t-ink:       #0F172A;
+  --t-ink-muted: #475569;
+  --t-ink-dim:   #64748B;
+  --t-ink-faint: #94A3B8;
+  --t-line:      #0F172A;
+  --t-line-soft: rgba(15,23,42,0.12);
+  --t-primary:   #5DD3CB;
+  --t-secondary: #C4B5FD;
+  --t-accent:    #F5C842;
+  --t-lilac:     #FF8C7A;
+  --t-success:   #86EFAC;
+  --t-danger:    #EF4444;
+  --t-glow: 93, 211, 203;
+}

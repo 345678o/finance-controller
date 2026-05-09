@@ -7,9 +7,18 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "android": "npm run build && cap sync android",
+    "android:open": "npm run android && cap open android",
+    "android:apk": "npm run android && cd android && (./gradlew assembleDebug || gradlew.bat assembleDebug)",
+    "android:assets": "capacitor-assets generate --android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.3",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/cli": "^8.3.3",
+    "@capacitor/core": "^8.3.3",
+    "capacitor-sms-inbox": "^1.3.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
     "react": "^18.3.1",
@@ -18,6 +27,7 @@
     "zustand": "^5.0.13"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@eslint/js": "^10.0.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

@@ -7,6 +7,7 @@ import Insights from "@/pages/Insights";
 import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
 import FutureVision from "@/pages/FutureVision";
+import ImportSms from "@/pages/ImportSms";
 import NotFound from "@/pages/NotFound";
 
 const router = createBrowserRouter([
@@ -22,6 +23,7 @@ const router = createBrowserRouter([
       { path: "profile",    element: <Profile /> },
       { path: "settings",   element: <Settings /> },
       { path: "future",     element: <FutureVision /> },
+      { path: "import-sms", element: <ImportSms /> },
       { path: "*",          element: <NotFound /> },
     ],
   },

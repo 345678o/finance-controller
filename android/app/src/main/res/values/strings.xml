@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AuraLoop</string>
+    <string name="title_activity_main">AuraLoop</string>
+    <string name="package_name">com.auraloop.app</string>
+    <string name="custom_url_scheme">com.auraloop.app</string>
+</resources>

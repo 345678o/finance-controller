@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Adaptive icon foreground — keep important art inside the inner 66% safe zone (512px center band) -->
+  <g>
+    <circle cx="512" cy="512" r="200" fill="none" stroke="#0F172A" stroke-width="48" stroke-linecap="round"
+            stroke-dasharray="900 100" transform="rotate(-30 512 512)"/>
+    <circle cx="512" cy="512" r="100" fill="none" stroke="#0F172A" stroke-width="24"/>
+    <circle cx="512" cy="512" r="24" fill="#0F172A"/>
+  </g>
+</svg>

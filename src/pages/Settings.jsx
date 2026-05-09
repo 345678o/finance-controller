@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Bell, Coins, EyeOff, Shield, Sparkles, Zap } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Bell, Coins, EyeOff, MessageSquare, Shield, Sparkles, Zap } from "lucide-react";
 import { useAuraStore } from "@/store/useAuraStore";
 import { inr } from "@/utils/format";
 
@@ -15,6 +16,7 @@ const ROUND_UPS = [10, 20, 50];
 export default function Settings() {
   const settings        = useAuraStore((s) => s.settings);
   const updateSettings  = useAuraStore((s) => s.updateSettings);
+  const navigate        = useNavigate();
 
   return (
     <>
@@ -37,6 +39,22 @@ export default function Settings() {
             Round-up rules, vibes, and how loud AuraLoop pings you.
           </p>
         </motion.section>
+
+        {/* SMS Import */}
+        <Section
+          delay={0.06}
+          Icon={MessageSquare}
+          iconBg="#5DD3CB"
+          title="Import from SMS"
+          sub="Auto-track real spending from your bank texts. Local, private."
+        >
+          <button
+            onClick={() => navigate("/import-sms")}
+            className="mt-4 w-full rounded-xl border-2 border-[#0F172A] bg-[#F5C842] py-3 text-[13px] font-extrabold text-[#0F172A] shadow-[3px_3px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none"
+          >
+            Scan inbox now
+          </button>
+        </Section>
 
         {/* Round-up rule */}
         <Section

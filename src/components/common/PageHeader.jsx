@@ -15,7 +15,7 @@ export default function PageHeader({ title, onProfile }) {
         initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="flex items-center justify-between"
+        className="md:hidden flex items-center justify-between"
       >
         <button
           onClick={() => setOpen(true)}
