@@ -8,74 +8,66 @@ export default {
         display: ["Inter", "system-ui", "sans-serif"],
       },
       colors: {
+        // ── Surfaces ─────────────────────────────────────────────
         bg: {
-          DEFAULT: "#0a0a0a",
-          soft: "#111114",
-          elev: "#15151a",
+          DEFAULT: "#F8FAFC",   // page (off-white)
+          card:    "#FFFFFF",   // primary card surface
+          elev:    "#F1F5F9",   // soft secondary surface (slate-100)
+          inset:   "#E2E8F0",   // muted inset (slate-200)
         },
+        // ── Text ────────────────────────────────────────────────
         ink: {
-          DEFAULT: "#f5f5f7",
-          muted: "#a1a1aa",
-          dim: "#6b6b75",
+          DEFAULT: "#0F172A",   // primary text (slate-900)
+          muted:   "#475569",   // secondary text (slate-600)
+          dim:     "#64748B",   // tertiary text (slate-500)
+          faint:   "#94A3B8",   // captions (slate-400)
         },
-        neon: {
-          pink: "#ff2d92",
-          green: "#00ffae",
-          cyan: "#00e5ff",
-          violet: "#8b5cf6",
-          amber: "#ffb020",
+        // ── Strokes ─────────────────────────────────────────────
+        line: {
+          DEFAULT: "#E2E8F0",   // default border (slate-200)
+          soft:    "#EEF2F7",
         },
-        aura: {
-          calm: "#00ffae",
-          flow: "#00e5ff",
-          spark: "#ff2d92",
-          burn: "#ff5470",
+        // ── Brand ───────────────────────────────────────────────
+        primary: {
+          DEFAULT: "#22C55E",   // money / positive
+          ink:     "#15803D",   // text on light primary tints
+          soft:    "#DCFCE7",   // light tint surface
+        },
+        accent: {
+          DEFAULT: "#6366F1",   // insight / AI
+          ink:     "#4338CA",
+          soft:    "#E0E7FF",
+        },
+        warn: {
+          DEFAULT: "#F59E0B",   // caution
+          ink:     "#B45309",
+          soft:    "#FEF3C7",
+        },
+        danger: {
+          DEFAULT: "#EF4444",   // alert
+          ink:     "#B91C1C",
+          soft:    "#FEE2E2",
         },
       },
       borderRadius: {
-        xl2: "1.25rem",
-        "3xl": "1.75rem",
-        "4xl": "2.25rem",
+        xl2:   "1.25rem",   // 20px
+        "3xl": "1.75rem",   // 28px
+        "4xl": "2.25rem",   // 36px
       },
       boxShadow: {
-        "glow-green": "0 0 24px rgba(0, 255, 174, 0.45), 0 0 48px rgba(0, 255, 174, 0.18)",
-        "glow-pink":  "0 0 24px rgba(255, 45, 146, 0.45), 0 0 48px rgba(255, 45, 146, 0.18)",
-        "glow-cyan":  "0 0 24px rgba(0, 229, 255, 0.45), 0 0 48px rgba(0, 229, 255, 0.18)",
-        "glow-soft":  "0 8px 40px rgba(0, 255, 174, 0.10)",
-        "glass":      "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.45)",
-      },
-      backgroundImage: {
-        "aura-gradient":   "linear-gradient(135deg, #00ffae 0%, #00e5ff 50%, #ff2d92 100%)",
-        "aura-radial":     "radial-gradient(ellipse at top, rgba(0,255,174,0.18), transparent 60%), radial-gradient(ellipse at bottom, rgba(255,45,146,0.15), transparent 60%)",
-        "aura-mesh":       "radial-gradient(at 20% 10%, rgba(0,229,255,0.18) 0, transparent 45%), radial-gradient(at 80% 0%, rgba(255,45,146,0.15) 0, transparent 50%), radial-gradient(at 60% 100%, rgba(0,255,174,0.15) 0, transparent 55%)",
-        "neon-line":       "linear-gradient(90deg, transparent, #00ffae, transparent)",
+        card:   "0 1px 2px rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.06)",
+        soft:   "0 1px 0 rgba(15,23,42,0.04), 0 2px 8px rgba(15,23,42,0.04)",
+        stamp:  "0 4px 0 rgba(15,23,42,0.08)",
+        ringed: "0 0 0 4px rgba(34,197,94,0.10)",
       },
       keyframes: {
-        "aura-pulse": {
-          "0%, 100%": { transform: "scale(1)", opacity: "0.85" },
-          "50%":      { transform: "scale(1.04)", opacity: "1" },
-        },
-        shimmer: {
-          "0%":   { backgroundPosition: "-400px 0" },
-          "100%": { backgroundPosition: "400px 0" },
-        },
-        float: {
-          "0%, 100%": { transform: "translateY(0px)" },
-          "50%":      { transform: "translateY(-6px)" },
-        },
         "fade-up": {
           "0%":   { opacity: "0", transform: "translateY(8px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
       },
       animation: {
-        "aura-pulse": "aura-pulse 2.6s ease-in-out infinite",
-        shimmer: "shimmer 2.4s linear infinite",
-        float: "float 5s ease-in-out infinite",
-        "fade-up": "fade-up 0.5s ease-out both",
-      },
-      backdropBlur: {
-        xs: "2px",
+        "fade-up": "fade-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) both",
       },
     },
   },

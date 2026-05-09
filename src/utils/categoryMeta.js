@@ -13,19 +13,26 @@ import {
   Wallet,
 } from "lucide-react";
 
+// Restrained palette — only two brand hues (primary + accent), neutrals for the rest.
+// Keeps the dashboard from looking like a candy store.
+const PRIMARY  = { color: "#22C55E", soft: "#DCFCE7" }; // money / positive flow
+const ACCENT   = { color: "#6366F1", soft: "#E0E7FF" }; // insight / discretionary
+const WARN     = { color: "#F59E0B", soft: "#FEF3C7" };
+const NEUTRAL  = { color: "#475569", soft: "#E2E8F0" };
+
 const META = {
-  Food:          { Icon: UtensilsCrossed, color: "#ff2d92", glow: "rgba(255,45,146,0.55)" },
-  Groceries:     { Icon: ShoppingCart,    color: "#00ffae", glow: "rgba(0,255,174,0.55)" },
-  Transport:     { Icon: Car,             color: "#00e5ff", glow: "rgba(0,229,255,0.55)" },
-  Shopping:      { Icon: ShoppingBag,     color: "#ffb020", glow: "rgba(255,176,32,0.55)" },
-  Subscriptions: { Icon: Tv,              color: "#8b5cf6", glow: "rgba(139,92,246,0.55)" },
-  Cafes:         { Icon: Coffee,          color: "#ffb020", glow: "rgba(255,176,32,0.55)" },
-  Beauty:        { Icon: Sparkles,        color: "#ff2d92", glow: "rgba(255,45,146,0.55)" },
-  Entertainment: { Icon: Music,           color: "#00e5ff", glow: "rgba(0,229,255,0.55)" },
-  Fitness:       { Icon: Dumbbell,        color: "#00ffae", glow: "rgba(0,255,174,0.55)" },
-  Travel:        { Icon: Plane,           color: "#00e5ff", glow: "rgba(0,229,255,0.55)" },
-  Fuel:          { Icon: Fuel,            color: "#ffb020", glow: "rgba(255,176,32,0.55)" },
+  Food:          { Icon: UtensilsCrossed, ...ACCENT  },
+  Groceries:     { Icon: ShoppingCart,    ...PRIMARY },
+  Transport:     { Icon: Car,             ...NEUTRAL },
+  Shopping:      { Icon: ShoppingBag,     ...ACCENT  },
+  Subscriptions: { Icon: Tv,              ...WARN    },
+  Cafes:         { Icon: Coffee,          ...WARN    },
+  Beauty:        { Icon: Sparkles,        ...ACCENT  },
+  Entertainment: { Icon: Music,           ...ACCENT  },
+  Fitness:       { Icon: Dumbbell,        ...PRIMARY },
+  Travel:        { Icon: Plane,           ...NEUTRAL },
+  Fuel:          { Icon: Fuel,            ...NEUTRAL },
 };
 
 export const metaForCategory = (category) =>
-  META[category] || { Icon: Wallet, color: "#a1a1aa", glow: "rgba(161,161,170,0.45)" };
+  META[category] || { Icon: Wallet, ...NEUTRAL };

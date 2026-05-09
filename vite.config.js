@@ -15,8 +15,8 @@ export default defineConfig({
         short_name: "AuraLoop",
         description:
           "AuraLoop — round-up savings, spending awareness, and emotional finance for Gen Z.",
-        theme_color: "#00ffae",
-        background_color: "#0a0a0a",
+        theme_color: "#22C55E",
+        background_color: "#F8FAFC",
         display: "standalone",
         orientation: "portrait",
         start_url: "/",

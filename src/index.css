@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,12 +6,10 @@
 
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
-  html, body, #root {
-    height: 100%;
-  }
+  html, body, #root { height: 100%; }
 
   html {
     scroll-behavior: smooth;
@@ -20,102 +18,74 @@
 
   body {
     @apply bg-bg text-ink font-sans antialiased;
-    background-image:
-      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0, 255, 174, 0.10), transparent 60%),
-      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255, 45, 146, 0.10), transparent 60%),
-      radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0, 229, 255, 0.08), transparent 60%);
-    background-attachment: fixed;
+    font-feature-settings: "ss01", "cv11";
     overscroll-behavior-y: none;
   }
 
   ::selection {
-    background: rgba(0, 255, 174, 0.30);
-    color: #ffffff;
+    background: #DCFCE7;
+    color: #0F172A;
   }
 
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  /* numbers should always feel structured */
+  .num { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+  /* minimal scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, rgba(0, 255, 174, 0.40), rgba(255, 45, 146, 0.30));
+    background: #CBD5E1;
     border-radius: 999px;
   }
-  ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, rgba(0, 255, 174, 0.65), rgba(255, 45, 146, 0.55));
-  }
+  ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
 }
 
 @layer components {
-  /* Glass card — frosted, premium fintech feel */
-  .glass-card {
-    @apply relative rounded-3xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-xl shadow-glass;
+  /* Primary card surface — soft rounded with subtle shadow */
+  .surface {
+    @apply rounded-3xl border border-line bg-bg-card shadow-soft;
   }
 
-  .glass-card-strong {
-    @apply relative rounded-3xl border border-white/[0.12] bg-white/[0.06] backdrop-blur-2xl shadow-glass;
+  /* Slightly more elevated surface for hero content */
+  .surface-raised {
+    @apply rounded-3xl border border-line bg-bg-card shadow-card;
   }
 
-  /* Aura gradient text */
-  .text-aura {
-    @apply bg-aura-gradient bg-clip-text text-transparent;
+  /* Pill chips — used for status tags */
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold;
   }
+  .chip-primary { @apply bg-primary-soft text-primary-ink; }
+  .chip-accent  { @apply bg-accent-soft  text-accent-ink; }
+  .chip-warn    { @apply bg-warn-soft    text-warn-ink; }
+  .chip-danger  { @apply bg-danger-soft  text-danger-ink; }
+  .chip-muted   { @apply bg-bg-elev      text-ink-muted; }
 
-  /* Neon glow buttons */
-  .btn-neon {
+  /* Buttons */
+  .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-semibold
-           bg-neon-green text-bg shadow-glow-green
-           transition-transform duration-200 active:scale-[0.97] hover:brightness-110;
+           bg-primary text-white shadow-stamp transition-transform duration-150
+           active:translate-y-[2px] active:shadow-none hover:brightness-105;
   }
-
-  .btn-neon-pink {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-semibold
-           bg-neon-pink text-white shadow-glow-pink
-           transition-transform duration-200 active:scale-[0.97] hover:brightness-110;
-  }
-
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-semibold
-           border border-white/10 bg-white/[0.03] text-ink
-           transition-colors duration-200 hover:bg-white/[0.06];
+           border border-line bg-bg-card text-ink transition-colors hover:bg-bg-elev;
   }
 
-  /* Animated aura background — for hero sections */
-  .aura-bg {
-    @apply relative overflow-hidden;
-    background: radial-gradient(circle at 30% 20%, rgba(0,255,174,0.18), transparent 50%),
-                radial-gradient(circle at 70% 80%, rgba(255,45,146,0.16), transparent 55%),
-                radial-gradient(circle at 50% 50%, rgba(0,229,255,0.10), transparent 60%);
+  /* Subtle horizontal divider */
+  .divider {
+    @apply h-px w-full bg-line;
   }
 
-  /* Shimmer effect for skeletons */
-  .shimmer {
-    background: linear-gradient(90deg,
-      rgba(255,255,255,0.04) 0%,
-      rgba(255,255,255,0.10) 50%,
-      rgba(255,255,255,0.04) 100%);
-    background-size: 800px 100%;
-    @apply animate-shimmer;
-  }
-
-  /* Hairline divider */
-  .hairline {
-    @apply h-px w-full bg-gradient-to-r from-transparent via-white/15 to-transparent;
+  /* Section label — small uppercase eyebrow */
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-dim;
   }
 }
 
 @layer utilities {
-  .glow-green { box-shadow: 0 0 24px rgba(0, 255, 174, 0.45), 0 0 48px rgba(0, 255, 174, 0.18); }
-  .glow-pink  { box-shadow: 0 0 24px rgba(255, 45, 146, 0.45), 0 0 48px rgba(255, 45, 146, 0.18); }
-  .glow-cyan  { box-shadow: 0 0 24px rgba(0, 229, 255, 0.45), 0 0 48px rgba(0, 229, 255, 0.18); }
-
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
   .safe-top    { padding-top:    env(safe-area-inset-top); }
-
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { scrollbar-width: none; }
 }

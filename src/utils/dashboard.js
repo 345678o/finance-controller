@@ -10,40 +10,35 @@ export const greetingFor = (date = new Date()) => {
 
 // ── Aura state ────────────────────────────────────────────────────────
 // Maps a numeric Aura Score (0–100) to a state used across the dashboard.
+// Stable = green, Risky = amber, Danger = red.
 export const auraStateFor = (score) => {
   if (score >= 70) {
     return {
       key: "stable",
       label: "Stable",
-      verb: "stable spending",
-      hex: "#00ffae",
-      hexSoft: "rgba(0,255,174,0.55)",
-      textShadow: "0 0 24px rgba(0,255,174,0.45)",
-      ringClass: "ring-neon-green/60",
-      glowClass: "shadow-glow-green",
+      hex: "#22C55E",
+      track: "#E2E8F0",
+      chipClass: "chip-primary",
+      caption: "Healthy spending patterns this week.",
     };
   }
   if (score >= 45) {
     return {
-      key: "focused",
-      label: "Focused",
-      verb: "watchful flow",
-      hex: "#00e5ff",
-      hexSoft: "rgba(0,229,255,0.55)",
-      textShadow: "0 0 24px rgba(0,229,255,0.45)",
-      ringClass: "ring-neon-cyan/60",
-      glowClass: "shadow-glow-cyan",
+      key: "risky",
+      label: "Risky",
+      hex: "#F59E0B",
+      track: "#E2E8F0",
+      chipClass: "chip-warn",
+      caption: "Watch impulse buys and late-night spend.",
     };
   }
   return {
-    key: "risk",
-    label: "Risk Zone",
-    verb: "emotional spend",
-    hex: "#ff2d92",
-    hexSoft: "rgba(255,45,146,0.55)",
-    textShadow: "0 0 24px rgba(255,45,146,0.45)",
-    ringClass: "ring-neon-pink/60",
-    glowClass: "shadow-glow-pink",
+    key: "danger",
+    label: "Danger",
+    hex: "#EF4444",
+    track: "#E2E8F0",
+    chipClass: "chip-danger",
+    caption: "Heavy week — pause one category to reset.",
   };
 };
 
@@ -103,6 +98,46 @@ export const computeInvisibleSpend = (txns) => {
       { label: "Micro-buys",      amount: Math.round(microBuys * 0.4) },
     ].filter((b) => b.amount > 0),
   };
+};
+
+// Daily spend totals for the last `days` days (oldest → newest).
+export const dailySpendSeries = (txns, days = 7) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const buckets = Array.from({ length: days }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - (days - 1 - i));
+    return { date: d, label: d.toLocaleDateString("en-IN", { weekday: "short" }), total: 0 };
+  });
+  for (const t of txns) {
+    const d = new Date(t.timestamp);
+    d.setHours(0, 0, 0, 0);
+    const diff = Math.floor((today - d) / 86400000);
+    const idx = days - 1 - diff;
+    if (idx >= 0 && idx < days) buckets[idx].total += t.amount;
+  }
+  return buckets;
+};
+
+// Spend totals for this week vs last week (Monday-based).
+export const weekOverWeek = (txns) => {
+  const now = new Date();
+  const day = (now.getDay() + 6) % 7;
+  const monThis = new Date(now);
+  monThis.setDate(now.getDate() - day);
+  monThis.setHours(0, 0, 0, 0);
+  const monLast = new Date(monThis);
+  monLast.setDate(monThis.getDate() - 7);
+
+  let thisWk = 0;
+  let lastWk = 0;
+  for (const t of txns) {
+    const d = new Date(t.timestamp);
+    if (d >= monThis) thisWk += t.amount;
+    else if (d >= monLast) lastWk += t.amount;
+  }
+  const delta = lastWk ? Math.round(((thisWk - lastWk) / lastWk) * 100) : 0;
+  return { thisWk, lastWk, delta };
 };
 
 // Pretty timestamp like "2:14 pm"

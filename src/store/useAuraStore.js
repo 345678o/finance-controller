@@ -29,6 +29,15 @@ const initialInsights = [
   },
 ];
 
+const initialSettings = {
+  roundUpStep: 10,           // 10 / 20 / 50
+  autoSave: true,
+  notifyDailyDigest: true,
+  notifyInvisibleSpend: true,
+  notifyJarMilestones: false,
+  excludeSubscriptions: false,
+};
+
 export const useAuraStore = create(
   persist(
     (set, get) => ({
@@ -39,6 +48,7 @@ export const useAuraStore = create(
       streak: 7,
       wrappedData: initialWrapped,
       insights: initialInsights,
+      settings: initialSettings,
 
       // ───── actions ─────
       addTransaction: (txn) =>
@@ -65,6 +75,9 @@ export const useAuraStore = create(
       setWrappedData: (wrappedData) => set({ wrappedData }),
       setInsights: (insights) => set({ insights }),
 
+      updateSettings: (patch) =>
+        set((s) => ({ settings: { ...s.settings, ...patch } })),
+
       // ───── selectors (computed via getters) ─────
       getTotalSaved: () => sumSaved(get().transactions),
       getTotalSpent: () =>
@@ -79,12 +92,13 @@ export const useAuraStore = create(
           streak: 7,
           wrappedData: initialWrapped,
           insights: initialInsights,
+          settings: initialSettings,
         }),
     }),
     {
       name: "auraloop-store",
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: 2,
       partialize: (s) => ({
         transactions: s.transactions,
         jars: s.jars,
@@ -92,6 +106,7 @@ export const useAuraStore = create(
         streak: s.streak,
         wrappedData: s.wrappedData,
         insights: s.insights,
+        settings: s.settings,
       }),
     },
   ),

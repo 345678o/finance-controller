@@ -82,8 +82,44 @@ const generate = (count = 60) => {
 export const mockTransactions = generate(60);
 
 export const mockJars = [
-  { id: "jar_trip",    name: "Goa Trip",        emoji: "🏝️", target: 25000, saved: 8420,  color: "#00ffae" },
-  { id: "jar_iphone",  name: "iPhone Upgrade",  emoji: "📱", target: 80000, saved: 12750, color: "#00e5ff" },
-  { id: "jar_concert", name: "Coldplay Tickets", emoji: "🎤", target: 12000, saved: 11400, color: "#ff2d92" },
-  { id: "jar_emergency", name: "Emergency Fund", emoji: "🛡️", target: 50000, saved: 6200,  color: "#8b5cf6" },
+  {
+    id: "jar_goa",
+    name: "Goa Trip",
+    emoji: "🌴",
+    iconKey: "palm",
+    target: 40000,
+    saved: 18420,
+    color: "#22C55E",
+    monthsLeft: 2,
+  },
+  {
+    id: "jar_macbook",
+    name: "MacBook Fund",
+    emoji: "💻",
+    iconKey: "laptop",
+    target: 120000,
+    saved: 52800,
+    color: "#EC4899",
+    monthsLeft: 5,
+  },
+  {
+    id: "jar_emergency",
+    name: "Emergency Fund",
+    emoji: "🛡️",
+    iconKey: "shield",
+    target: 50000,
+    saved: 25600,
+    color: "#06B6D4",
+    monthsLeft: 3,
+  },
+  {
+    id: "jar_bike",
+    name: "Bike Upgrade",
+    emoji: "🏍️",
+    iconKey: "bike",
+    target: 35000,
+    saved: 12750,
+    color: "#A855F7",
+    monthsLeft: 4,
+  },
 ];

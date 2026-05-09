@@ -5,7 +5,6 @@ export default function FutureVision() {
     <PagePlaceholder
       title="Future Vision"
       subtitle="Project today's habits onto tomorrow's version of you."
-      accent="cyan"
     />
   );
 }
