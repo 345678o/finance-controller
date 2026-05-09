@@ -1,0 +1,121 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html, body, #root {
+    height: 100%;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0, 255, 174, 0.10), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255, 45, 146, 0.10), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0, 229, 255, 0.08), transparent 60%);
+    background-attachment: fixed;
+    overscroll-behavior-y: none;
+  }
+
+  ::selection {
+    background: rgba(0, 255, 174, 0.30);
+    color: #ffffff;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(0, 255, 174, 0.40), rgba(255, 45, 146, 0.30));
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(0, 255, 174, 0.65), rgba(255, 45, 146, 0.55));
+  }
+}
+
+@layer components {
+  /* Glass card — frosted, premium fintech feel */
+  .glass-card {
+    @apply relative rounded-3xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-xl shadow-glass;
+  }
+
+  .glass-card-strong {
+    @apply relative rounded-3xl border border-white/[0.12] bg-white/[0.06] backdrop-blur-2xl shadow-glass;
+  }
+
+  /* Aura gradient text */
+  .text-aura {
+    @apply bg-aura-gradient bg-clip-text text-transparent;
+  }
+
+  /* Neon glow buttons */
+  .btn-neon {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-semibold
+           bg-neon-green text-bg shadow-glow-green
+           transition-transform duration-200 active:scale-[0.97] hover:brightness-110;
+  }
+
+  .btn-neon-pink {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-semibold
+           bg-neon-pink text-white shadow-glow-pink
+           transition-transform duration-200 active:scale-[0.97] hover:brightness-110;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-semibold
+           border border-white/10 bg-white/[0.03] text-ink
+           transition-colors duration-200 hover:bg-white/[0.06];
+  }
+
+  /* Animated aura background — for hero sections */
+  .aura-bg {
+    @apply relative overflow-hidden;
+    background: radial-gradient(circle at 30% 20%, rgba(0,255,174,0.18), transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(255,45,146,0.16), transparent 55%),
+                radial-gradient(circle at 50% 50%, rgba(0,229,255,0.10), transparent 60%);
+  }
+
+  /* Shimmer effect for skeletons */
+  .shimmer {
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0.04) 0%,
+      rgba(255,255,255,0.10) 50%,
+      rgba(255,255,255,0.04) 100%);
+    background-size: 800px 100%;
+    @apply animate-shimmer;
+  }
+
+  /* Hairline divider */
+  .hairline {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-white/15 to-transparent;
+  }
+}
+
+@layer utilities {
+  .glow-green { box-shadow: 0 0 24px rgba(0, 255, 174, 0.45), 0 0 48px rgba(0, 255, 174, 0.18); }
+  .glow-pink  { box-shadow: 0 0 24px rgba(255, 45, 146, 0.45), 0 0 48px rgba(255, 45, 146, 0.18); }
+  .glow-cyan  { box-shadow: 0 0 24px rgba(0, 229, 255, 0.45), 0 0 48px rgba(0, 229, 255, 0.18); }
+
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-top    { padding-top:    env(safe-area-inset-top); }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+}
