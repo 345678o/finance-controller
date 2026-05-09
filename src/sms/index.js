@@ -73,7 +73,7 @@ export async function requestSmsPermission(log = noop) {
  */
 export async function scanInbox(opts = {}, log = noop) {
   const { maxCount = 500, sinceDays = 180 } = opts;
-  if (!isAndroid()) return mockScan();
+  if (!isAndroid()) return { transactions: mockScan(), stats: { raw: 5, mocked: true } };
 
   const plugin = getPlugin(log);
   if (!plugin) throw new Error("SMS plugin failed to load");
@@ -88,20 +88,31 @@ export async function scanInbox(opts = {}, log = noop) {
   const messages = res?.smsList || res?.messages || [];
   log(`getSMSList → ${messages.length} raw messages`);
 
+  // Bucket by sender so we can see which banks we have AND which we missed.
+  const senderCounts = new Map();          // sender → count of raw SMS
+  const matchedSenders = new Map();        // sender → count of parsed-as-txn
+  const skippedSenders = new Map();        // sender → count where parse() returned null
+
   const parsed = [];
   for (const msg of messages) {
     const body = msg.body || "";
     const sender = msg.address || "";
     const ts = Number(msg.date || Date.now());
     if (!body || !sender) continue;
+    senderCounts.set(sender, (senderCounts.get(sender) || 0) + 1);
     const txn = parseSms(body, sender, ts);
-    if (txn) parsed.push(txn);
+    if (txn) {
+      parsed.push(txn);
+      matchedSenders.set(sender, (matchedSenders.get(sender) || 0) + 1);
+    } else {
+      skippedSenders.set(sender, (skippedSenders.get(sender) || 0) + 1);
+    }
   }
   log(`parsed → ${parsed.length} transactions matched`);
 
   // Newest first + dedupe by (timestamp + amount + merchant)
   const seen = new Set();
-  return parsed
+  const transactions = parsed
     .sort((a, b) => b.timestamp - a.timestamp)
     .filter((t) => {
       const key = `${t.timestamp}|${t.amount}|${t.merchant || ""}`;
@@ -109,6 +120,18 @@ export async function scanInbox(opts = {}, log = noop) {
       seen.add(key);
       return true;
     });
+
+  return {
+    transactions,
+    stats: {
+      raw: messages.length,
+      matched: parsed.length,
+      uniqueTxns: transactions.length,
+      sendersAll: [...senderCounts.entries()].sort((a, b) => b[1] - a[1]),
+      sendersMatched: [...matchedSenders.entries()].sort((a, b) => b[1] - a[1]),
+      sendersSkipped: [...skippedSenders.entries()].sort((a, b) => b[1] - a[1]),
+    },
+  };
 }
 
 /**

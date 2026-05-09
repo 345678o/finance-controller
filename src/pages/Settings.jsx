@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Bell, Coins, EyeOff, MessageSquare, Shield, Sparkles, Zap } from "lucide-react";
+import { Bell, Coins, EyeOff, Mail, MessageSquare, RotateCcw, Shield, Sparkles, Trash2, Zap } from "lucide-react";
 import { useAuraStore } from "@/store/useAuraStore";
 import { inr } from "@/utils/format";
 
@@ -14,9 +14,14 @@ import {
 const ROUND_UPS = [10, 20, 50];
 
 export default function Settings() {
-  const settings        = useAuraStore((s) => s.settings);
-  const updateSettings  = useAuraStore((s) => s.updateSettings);
-  const navigate        = useNavigate();
+  const settings              = useAuraStore((s) => s.settings);
+  const updateSettings        = useAuraStore((s) => s.updateSettings);
+  const resetToDemo           = useAuraStore((s) => s.resetToDemo);
+  const clearDemoData         = useAuraStore((s) => s.clearDemoData);
+  const clearAllTransactions  = useAuraStore((s) => s.clearAllTransactions);
+  const txnCount              = useAuraStore((s) => s.transactions.length);
+  const importedCount         = useAuraStore((s) => s.transactions.filter((t) => !!t.source).length);
+  const navigate              = useNavigate();
 
   return (
     <>
@@ -53,6 +58,22 @@ export default function Settings() {
             className="mt-4 w-full rounded-xl border-2 border-[#0F172A] bg-[#F5C842] py-3 text-[13px] font-extrabold text-[#0F172A] shadow-[3px_3px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none"
           >
             Scan inbox now
+          </button>
+        </Section>
+
+        {/* Email Import */}
+        <Section
+          delay={0.07}
+          Icon={Mail}
+          iconBg="#C4B5FD"
+          title="Import from email"
+          sub="Paste FamApp / FamPay transaction emails to add them to your dashboard."
+        >
+          <button
+            onClick={() => navigate("/import-email")}
+            className="mt-4 w-full rounded-xl border-2 border-[#0F172A] bg-[#5DD3CB] py-3 text-[13px] font-extrabold text-[#0F172A] shadow-[3px_3px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none"
+          >
+            Paste an email
           </button>
         </Section>
 
@@ -154,6 +175,41 @@ export default function Settings() {
               checked={settings.excludeSubscriptions}
               onChange={(v) => updateSettings({ excludeSubscriptions: v })}
             />
+          </div>
+        </Section>
+
+        {/* Data management */}
+        <Section
+          delay={0.22}
+          Icon={Trash2}
+          iconBg="#FF8C7A"
+          title="Manage data"
+          sub={`${txnCount} transactions · ${importedCount} imported · ${txnCount - importedCount} demo`}
+        >
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button
+              onClick={() => resetToDemo()}
+              className="rounded-xl border-2 border-[#0F172A] bg-[#F5C842] py-2.5 text-[12px] font-extrabold text-[#0F172A] shadow-[2px_2px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-1.5"
+            >
+              <RotateCcw size={13} strokeWidth={2.6} />
+              Load demo
+            </button>
+            <button
+              onClick={() => {
+                if (confirm("Clear all demo transactions? Imported SMS will be kept.")) clearDemoData();
+              }}
+              className="rounded-xl border-2 border-[#0F172A] bg-white py-2.5 text-[12px] font-extrabold text-[#0F172A] shadow-[2px_2px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none"
+            >
+              Clear demo only
+            </button>
+            <button
+              onClick={() => {
+                if (confirm("Clear ALL transactions including imported SMS? This cannot be undone.")) clearAllTransactions();
+              }}
+              className="rounded-xl border-2 border-[#0F172A] bg-[#FEE2E2] py-2.5 text-[12px] font-extrabold text-[#B91C1C] shadow-[2px_2px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none"
+            >
+              Clear everything
+            </button>
           </div>
         </Section>
 

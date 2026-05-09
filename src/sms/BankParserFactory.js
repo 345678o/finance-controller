@@ -3,6 +3,7 @@ import { SBIBankParser } from "./banks/SBIBankParser.js";
 import { ICICIBankParser } from "./banks/ICICIBankParser.js";
 import { AxisBankParser } from "./banks/AxisBankParser.js";
 import { KotakBankParser } from "./banks/KotakBankParser.js";
+import { UnionBankParser } from "./banks/UnionBankParser.js";
 import { BaseIndianBankParser } from "./BaseIndianBankParser.js";
 
 class GenericIndianBankParser extends BaseIndianBankParser {
@@ -16,6 +17,7 @@ const PARSERS = [
   new ICICIBankParser(),
   new AxisBankParser(),
   new KotakBankParser(),
+  new UnionBankParser(),
 ];
 
 const FALLBACK = new GenericIndianBankParser();

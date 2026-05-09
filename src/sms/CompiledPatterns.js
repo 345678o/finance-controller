@@ -6,9 +6,10 @@
 
 const Amount = {
   // Order: INR first (less likely to appear in "Avl Bal Rs.X"), then ₹, then Rs.
-  INR: /INR\s*([0-9,]+(?:\.\d{2})?)/i,
+  // Allow "Rs.X", "Rs X", "Rs:X" — Union Bank and others use the colon variant.
+  INR: /INR[.:\s]*([0-9,]+(?:\.\d{2})?)/i,
   RUPEE: /₹\s*([0-9,]+(?:\.\d{2})?)/,
-  RS: /Rs\.?\s*([0-9,]+(?:\.\d{2})?)/i,
+  RS: /Rs[.:\s]*([0-9,]+(?:\.\d{2})?)/i,
 };
 Amount.ALL = [Amount.INR, Amount.RUPEE, Amount.RS];
 
@@ -40,17 +41,17 @@ Account.ALL = [
 
 const Balance = {
   AVL_RS:
-    /(?:Bal|Balance|Avl Bal|Available Balance)[:\s]+Rs\.?\s*([0-9,]+(?:\.\d{2})?)/i,
+    /(?:Bal|Balance|Avl Bal|Available Balance)[:\s]+Rs[.:\s]*([0-9,]+(?:\.\d{2})?)/i,
   AVL_INR:
-    /(?:Bal|Balance|Avl Bal|Available Balance)[:\s]+INR\s*([0-9,]+(?:\.\d{2})?)/i,
+    /(?:Bal|Balance|Avl Bal|Available Balance)[:\s]+INR[.:\s]*([0-9,]+(?:\.\d{2})?)/i,
   AVL_RUPEE:
     /(?:Bal|Balance|Avl Bal|Available Balance)[:\s]+₹\s*([0-9,]+(?:\.\d{2})?)/i,
   AVL_NO_CCY:
     /(?:Bal|Balance|Avl Bal|Available Balance)[:\s]+([0-9,]+(?:\.\d{2})?)/i,
   UPDATED_RS:
-    /(?:Updated Balance|Remaining Balance)[:\s]+Rs\.?\s*([0-9,]+(?:\.\d{2})?)/i,
+    /(?:Updated Balance|Remaining Balance)[:\s]+Rs[.:\s]*([0-9,]+(?:\.\d{2})?)/i,
   UPDATED_INR:
-    /(?:Updated Balance|Remaining Balance)[:\s]+INR\s*([0-9,]+(?:\.\d{2})?)/i,
+    /(?:Updated Balance|Remaining Balance)[:\s]+INR[.:\s]*([0-9,]+(?:\.\d{2})?)/i,
 };
 Balance.ALL = [
   Balance.AVL_RS,

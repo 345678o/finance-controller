@@ -20,6 +20,7 @@ import {
 
 import useDashboardData from "@/hooks/useDashboardData";
 import useCountUp       from "@/hooks/useCountUp";
+import { useAuraStore } from "@/store/useAuraStore";
 import { auraStateFor, formatTime, dailySpendSeries } from "@/utils/dashboard";
 import { merchantBrand }            from "@/utils/wrapped";
 import { inr, inrCompact }          from "@/utils/format";
@@ -37,11 +38,14 @@ export default function Dashboard() {
   const animatedSaved = useCountUp(d.totalSaved, 1.4);
 
   const series = useMemo(() => dailySpendSeries(d.transactions, 7), [d.transactions]);
+  const isEmpty = d.transactions.length === 0;
 
   return (
     <>
       {/* Mobile header (replaced by TopNav on desktop) */}
       <PageHeader title="Home" />
+
+      {isEmpty && <OnboardingBanner navigate={navigate} />}
 
       {/* ── HERO ───────────────────────────────────────────────────── */}
       <section className="mt-4 md:mt-6 grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-7 items-stretch">
@@ -188,6 +192,50 @@ export default function Dashboard() {
 /* ────────────────────────────────────────────────────────────────────── */
 /*  Helpers                                                              */
 /* ────────────────────────────────────────────────────────────────────── */
+
+function OnboardingBanner({ navigate }) {
+  const resetToDemo = useAuraStore((s) => s.resetToDemo);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      className="mt-4 md:mt-6 stamp-card stamp-card-hover p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-4"
+      style={{ background: "var(--t-card-soft)" }}
+    >
+      <div
+        className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border-2"
+        style={{ borderColor: "var(--t-line)", background: "var(--t-primary)" }}
+      >
+        <MessageSquare size={24} strokeWidth={2.4} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-[var(--t-ink-muted)]">
+          Welcome
+        </p>
+        <h2 className="mt-1 text-[18px] md:text-[20px] font-extrabold tracking-tight">
+          Bring in your real spending to get started
+        </h2>
+        <p className="mt-1 text-[13px] text-[var(--t-ink-muted)] max-w-2xl">
+          AuraLoop starts empty. Import transactions from your phone's bank SMS
+          (Android) — or load demo data to explore the UI.
+        </p>
+      </div>
+      <div className="flex gap-2 shrink-0">
+        <button
+          onClick={() => navigate("/import-sms")}
+          className="stamp-btn !py-3 !px-4"
+          style={{ background: "var(--t-primary)" }}
+        >
+          Import SMS
+        </button>
+        <button onClick={() => resetToDemo()} className="stamp-btn !py-3 !px-4">
+          Try demo
+        </button>
+      </div>
+    </motion.div>
+  );
+}
 
 const TONE_BG = {
   primary:   "var(--t-primary)",
@@ -522,6 +570,16 @@ function RecentActivityCard({ txns }) {
         </button>
       </div>
 
+      {txns.length === 0 ? (
+        <div
+          className="mt-5 rounded-xl border-2 border-dashed p-6 text-center"
+          style={{ borderColor: "var(--t-line-soft)" }}
+        >
+          <p className="text-[13px] font-bold text-[var(--t-ink-muted)]">
+            No activity yet — import SMS or load demo data to see transactions here.
+          </p>
+        </div>
+      ) : (
       <ul className="mt-5 divide-y-2" style={{ borderColor: "var(--t-line-soft)" }}>
         {txns.slice(0, 5).map((t) => {
           const brand = merchantBrand(t.merchant);
@@ -560,6 +618,7 @@ function RecentActivityCard({ txns }) {
           );
         })}
       </ul>
+      )}
     </motion.div>
   );
 }

@@ -33,6 +33,7 @@ export default function ImportSms() {
   const [step, setStep] = useState(STEP.GATE);
   const [error, setError] = useState(null);
   const [parsed, setParsed] = useState([]);    // raw ParsedTransactions
+  const [stats, setStats] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const [importedCount, setImportedCount] = useState(0);
   const [diag, setDiag] = useState([]);           // visible diagnostic log
@@ -77,8 +78,11 @@ export default function ImportSms() {
         }
       }
       setStep(STEP.SCANNING);
-      const list = await scanInbox({ maxCount: 500, sinceDays: 180 }, log);
+      const result = await scanInbox({ maxCount: 500, sinceDays: 180 }, log);
+      // Backwards-compat: scanInbox now returns { transactions, stats }
+      const list = Array.isArray(result) ? result : result.transactions;
       setParsed(list);
+      setStats(Array.isArray(result) ? null : result.stats);
       setStep(STEP.REVIEW);
     } catch (e) {
       console.error("[import-sms] scan flow error:", e);
@@ -129,6 +133,7 @@ export default function ImportSms() {
               selected={selected}
               onToggle={toggle}
               totals={totals}
+              stats={stats}
               onImport={importSelected}
               onBack={() => setStep(STEP.GATE)}
             />
@@ -251,7 +256,8 @@ function Scanning() {
   );
 }
 
-function Review({ candidates, selected, onToggle, totals, onImport, onBack }) {
+function Review({ candidates, selected, onToggle, totals, stats, onImport, onBack }) {
+  const [showSenders, setShowSenders] = useState(false);
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -265,6 +271,53 @@ function Review({ candidates, selected, onToggle, totals, onImport, onBack }) {
         <SummaryStat label="Total spend" value={inrCompact(totals.expenses)} tint="var(--t-accent)" />
         <SummaryStat label="Round-ups"   value={inrCompact(totals.savings)}   tint="var(--t-lilac)" />
       </div>
+
+      {/* Diagnostic — sender breakdown */}
+      {stats && stats.raw > 0 && (
+        <div
+          className="stamp-card mt-4 p-4"
+          style={{ background: "var(--t-card-soft)" }}
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-[12px] font-bold text-[var(--t-ink)]">
+              Read <strong>{stats.raw}</strong> SMS · matched <strong>{stats.matched}</strong> ·
+              imported <strong>{stats.uniqueTxns}</strong> after dedupe
+            </p>
+            <button
+              onClick={() => setShowSenders((v) => !v)}
+              className="text-[11px] font-extrabold underline text-[var(--t-ink-muted)]"
+            >
+              {showSenders ? "Hide" : "Show"} senders
+            </button>
+          </div>
+          {showSenders && (
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] font-mono">
+              <div>
+                <p className="font-sans font-extrabold text-[10px] uppercase tracking-[0.1em] text-[var(--t-ink-muted)] mb-1">
+                  Matched ({stats.sendersMatched.length})
+                </p>
+                <ul className="space-y-0.5 max-h-40 overflow-y-auto">
+                  {stats.sendersMatched.map(([s, n]) => (
+                    <li key={s}>{n.toString().padStart(3, " ")} · {s}</li>
+                  ))}
+                  {stats.sendersMatched.length === 0 && <li className="text-[var(--t-ink-faint)]">none</li>}
+                </ul>
+              </div>
+              <div>
+                <p className="font-sans font-extrabold text-[10px] uppercase tracking-[0.1em] text-[var(--t-ink-muted)] mb-1">
+                  Skipped ({stats.sendersSkipped.length})
+                </p>
+                <ul className="space-y-0.5 max-h-40 overflow-y-auto">
+                  {stats.sendersSkipped.slice(0, 50).map(([s, n]) => (
+                    <li key={s}>{n.toString().padStart(3, " ")} · {s}</li>
+                  ))}
+                  {stats.sendersSkipped.length === 0 && <li className="text-[var(--t-ink-faint)]">none</li>}
+                </ul>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* List */}
       <div className="stamp-card mt-5">

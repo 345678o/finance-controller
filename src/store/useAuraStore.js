@@ -42,10 +42,13 @@ export const useAuraStore = create(
   persist(
     (set, get) => ({
       // ───── state ─────
-      transactions: mockTransactions,
+      // Default state is now empty — users start with a clean slate and
+      // import real transactions via SMS / email. Demo data is still
+      // available on demand via `resetToDemo`.
+      transactions: [],
       jars: mockJars,
-      auraScore: 78,
-      streak: 7,
+      auraScore: 0,
+      streak: 0,
       wrappedData: initialWrapped,
       insights: initialInsights,
       settings: initialSettings,
@@ -83,7 +86,7 @@ export const useAuraStore = create(
       getTotalSpent: () =>
         get().transactions.reduce((acc, t) => acc + (t.amount || 0), 0),
 
-      // ───── reset (handy for the demo) ─────
+      // ───── reset / clear ─────
       resetToDemo: () =>
         set({
           transactions: mockTransactions,
@@ -94,11 +97,37 @@ export const useAuraStore = create(
           insights: initialInsights,
           settings: initialSettings,
         }),
+
+      // Strip only demo (non-imported) transactions, keep SMS / email imports.
+      clearDemoData: () =>
+        set((s) => ({
+          transactions: s.transactions.filter((t) => !!t.source),
+          auraScore: s.transactions.some((t) => !!t.source) ? s.auraScore : 0,
+          streak: s.transactions.some((t) => !!t.source) ? s.streak : 0,
+        })),
+
+      // Nuclear: empty everything.
+      clearAllTransactions: () =>
+        set({ transactions: [], auraScore: 0, streak: 0 }),
     }),
     {
       name: "auraloop-store",
       storage: createJSONStorage(() => localStorage),
-      version: 2,
+      version: 3,
+      // Migration from any older version → strip demo transactions.
+      // Imported txns are tagged `source` so we keep those; everything else
+      // (the old auto-seeded demo set) goes.
+      migrate: (state) => {
+        if (!state) return state;
+        const kept = (state.transactions || []).filter((t) => !!t.source);
+        const allDemo = kept.length === 0;
+        return {
+          ...state,
+          transactions: kept,
+          auraScore: allDemo ? 0 : state.auraScore,
+          streak: allDemo ? 0 : state.streak,
+        };
+      },
       partialize: (s) => ({
         transactions: s.transactions,
         jars: s.jars,

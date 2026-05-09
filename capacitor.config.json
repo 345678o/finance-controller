@@ -8,5 +8,16 @@
   "android": {
     "allowMixedContent": false,
     "backgroundColor": "#F5F1E8"
+  },
+  "plugins": {
+    "GoogleAuth": {
+      "scopes": [
+        "profile",
+        "email",
+        "https://www.googleapis.com/auth/gmail.readonly"
+      ],
+      "serverClientId": "168214481129-5r32bltirol79r05uhm8psl92k1a12au.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": true
+    }
   }
 }

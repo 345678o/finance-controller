@@ -4,4 +4,5 @@
     <string name="title_activity_main">AuraLoop</string>
     <string name="package_name">com.auraloop.app</string>
     <string name="custom_url_scheme">com.auraloop.app</string>
+    <string name="server_client_id">168214481129-5r32bltirol79r05uhm8psl92k1a12au.apps.googleusercontent.com</string>
 </resources>
