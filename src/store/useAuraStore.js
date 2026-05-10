@@ -1,6 +1,14 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { mockTransactions, mockJars } from "@/data/mockTransactions";
+import {
+  mockTransactions,
+  mockJars,
+  mockUpi,
+  mockProfile,
+  mockInsights,
+  mockSettings,
+  mockWrapped,
+} from "@/data/mockTransactions";
 
 const sumSaved = (txns) =>
   txns.reduce((acc, t) => acc + (t.savedAmount || 0), 0);
@@ -176,17 +184,27 @@ export const useAuraStore = create(
         get().transactions.reduce((acc, t) => acc + (t.amount || 0), 0),
 
       // ───── reset / clear ─────
+      // Loads the full demo seed across every page:
+      //  • 120 generated txns spread across 365 days (Insights Year tab) +
+      //    3 sample withdrawals so the Spent-it feed has history,
+      //  • 6 goal jars (one funded, one fresh-start),
+      //  • linked GPay UPI with auto-debit on,
+      //  • populated profile (name, handle, email, emoji),
+      //  • 3-card insight feed,
+      //  • non-default settings (₹20 round-up, exclude-subs on,
+      //    jar-milestone alerts on) so toggles look lived-in,
+      //  • pre-computed weekly Wrapped recap.
       resetToDemo: () =>
         set({
           transactions: mockTransactions,
           jars: mockJars,
           auraScore: 78,
           streak: 7,
-          wrappedData: initialWrapped,
-          insights: initialInsights,
-          settings: initialSettings,
-          upi: initialUpi,
-          profile: initialProfile,
+          wrappedData: mockWrapped,
+          insights: mockInsights,
+          settings: mockSettings,
+          upi: mockUpi,
+          profile: mockProfile,
         }),
 
       // Strip only demo (non-imported) transactions, keep SMS / email imports.

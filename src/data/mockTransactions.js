@@ -54,14 +54,36 @@ const buildTimestamp = (daysBack, hour) => {
   return d.toISOString();
 };
 
-const generate = (count = 60) => {
+/* Skewed time distribution — most txns in the last 30 days (recency bias),
+   with thinner tails reaching back 365 days so the Insights "Year" tab and
+   the AR scanner's 90-day dynamic scenarios both have data to chew on. */
+function pickDaysBack() {
+  const r = seeded();
+  if (r < 0.35) return Math.floor(seeded() * 7);          // last week (35%)
+  if (r < 0.65) return Math.floor(seeded() * 30);         // last month (30%)
+  if (r < 0.85) return 30 + Math.floor(seeded() * 60);    // 30-90 days (20%)
+  return 90 + Math.floor(seeded() * 275);                 // 90-365 days (15%)
+}
+
+/* A handful of late-night Food/Cafe txns so InvisibleSpend has meaningful
+   "Late-night food" detection in the Insights card. */
+function nightHour() {
+  const r = seeded();
+  if (r < 0.25) return 22 + Math.floor(seeded() * 4);     // 22:00 - 01:59 (25%)
+  return 8 + Math.floor(seeded() * 14);                   // 8:00 - 21:59 (75%)
+}
+
+const generate = (count = 120) => {
   const txns = [];
   for (let i = 0; i < count; i++) {
     const m = pick(MERCHANTS);
     const amount = randIn(m.range);
     const savedAmount = roundUp(amount, 10);
-    const daysBack = Math.floor(seeded() * 45);
-    const hour = 7 + Math.floor(seeded() * 16);
+    const daysBack = pickDaysBack();
+    const hour = nightHour();
+    /* Mark ~20% as SMS-imported so they survive the migration that strips
+       generic demo data — gives the import surfaces a populated baseline. */
+    const fromSms = seeded() < 0.2;
     txns.push({
       id: `txn_${Date.now().toString(36)}_${i}`,
       merchant: m.name,
@@ -74,12 +96,67 @@ const generate = (count = 60) => {
       roundedUp: true,
       savedAmount,
       note: null,
+      ...(fromSms ? { source: "sms" } : {}),
     });
   }
   return txns.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 };
 
-export const mockTransactions = generate(60);
+/* A few withdrawal-style transactions so the demo shows what "Spent it"
+   looks like in the activity feed, the spend deltas, and the meme rotation. */
+const buildWithdrawals = () => {
+  const now = Date.now();
+  return [
+    {
+      id: "txn_wd_demo_1",
+      merchant: "Starbucks",
+      category: "Cafes",
+      amount: 480,
+      currency: "INR",
+      timestamp: new Date(now - 2 * 86400000).toISOString(),
+      paymentMethod: "Jar",
+      vibe: "burn",
+      roundedUp: false,
+      savedAmount: 0,
+      jarId: "jar_goa",
+      withdrawal: true,
+      note: "from Goa Trip",
+    },
+    {
+      id: "txn_wd_demo_2",
+      merchant: "Blinkit",
+      category: "Groceries",
+      amount: 720,
+      currency: "INR",
+      timestamp: new Date(now - 5 * 86400000).toISOString(),
+      paymentMethod: "Jar",
+      vibe: "burn",
+      roundedUp: false,
+      savedAmount: 0,
+      jarId: "jar_emergency",
+      withdrawal: true,
+      note: "from Emergency Fund",
+    },
+    {
+      id: "txn_wd_demo_3",
+      merchant: "MakeMyTrip",
+      category: "Travel",
+      amount: 1850,
+      currency: "INR",
+      timestamp: new Date(now - 9 * 86400000).toISOString(),
+      paymentMethod: "Jar",
+      vibe: "burn",
+      roundedUp: false,
+      savedAmount: 0,
+      jarId: "jar_macbook",
+      withdrawal: true,
+      note: "from MacBook Fund",
+    },
+  ];
+};
+
+export const mockTransactions = [...buildWithdrawals(), ...generate(120)]
+  .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
 export const mockJars = [
   {
@@ -122,4 +199,94 @@ export const mockJars = [
     color: "#A855F7",
     monthsLeft: 4,
   },
+  /* Funded jar — surfaces the "✓ Funded" pill, confetti burst, and the
+     locked-out state on the goal card. */
+  {
+    id: "jar_concert",
+    name: "Concert Tickets",
+    emoji: "🎟️",
+    iconKey: "ticket",
+    target: 8000,
+    saved: 8000,
+    color: "#F59E0B",
+    monthsLeft: 0,
+  },
+  /* Brand-new low-progress jar — shows the early-stage empty visual. */
+  {
+    id: "jar_tokyo",
+    name: "Tokyo Trip",
+    emoji: "🗼",
+    iconKey: "star",
+    target: 180000,
+    saved: 4200,
+    color: "#06B6D4",
+    monthsLeft: 14,
+  },
 ];
+
+/* Pre-linked UPI for the demo so the Profile/Settings flows show the
+   linked-app summary, autoDebit toggle, and "On" pill out of the box. */
+export const mockUpi = {
+  linked: true,
+  appId: "gpay",
+  vpa: "anamika@oksbi",
+  autoDebit: true,
+  syncTxns: true,
+  linkedAt: Date.now() - 7 * 86400000,
+};
+
+/* Demo profile so the avatar, name, and email are populated everywhere. */
+export const mockProfile = {
+  displayName: "Anamika",
+  handle: "anamika.aura",
+  email: "anamika@auraloop.app",
+  avatarEmoji: "🌅",
+  avatarImage: null,
+  joinedAt: Date.now() - 30 * 86400000,
+};
+
+/* Richer insight feed for the bell dropdown. */
+export const mockInsights = [
+  {
+    id: "ins_concert_funded",
+    title: "Concert Tickets jar is funded 🎉",
+    body: "8000 / 8000 — go book those tickets, future-you said yes.",
+    severity: "good",
+  },
+  {
+    id: "ins_food_spike",
+    title: "Food spend spiked 32% this week",
+    body: "Late-night Swiggy orders are quietly running the show.",
+    severity: "warn",
+  },
+  {
+    id: "ins_streak",
+    title: "You round-up saved 7 days in a row",
+    body: "That's ₹248 in invisible savings. Keep the loop going.",
+    severity: "good",
+  },
+];
+
+/* Demo settings — exercises every toggle so the Settings page isn't all
+   default. Round-up bumped to 20 (above the default 10), one notification
+   off, exclude-subscriptions on so the toggle visibly varies. */
+export const mockSettings = {
+  roundUpStep: 20,
+  autoSave: true,
+  notifyDailyDigest: true,
+  notifyInvisibleSpend: true,
+  notifyJarMilestones: true,
+  excludeSubscriptions: true,
+};
+
+/* Pre-computed weekly story for the Wrapped page so it shows a baseline
+   recap even before the user imports anything fresh. The page recomputes
+   from live transactions when present, but this gives it a stored fallback. */
+export const mockWrapped = {
+  generatedAt: Date.now(),
+  topCategory: "Food",
+  topMerchant: "Swiggy",
+  totalSpent: 18420,
+  totalSaved: 1247,
+  vibe: "spark",
+};
