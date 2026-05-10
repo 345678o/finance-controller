@@ -38,6 +38,24 @@ const initialSettings = {
   excludeSubscriptions: false,
 };
 
+const initialUpi = {
+  linked: false,
+  appId: null,        // 'gpay' | 'phonepe' | 'paytm' | 'bhim' | 'amazonpay' | 'cred'
+  vpa: null,          // user's UPI VPA, e.g. "anamika@oksbi"
+  autoDebit: false,   // route round-ups via UPI mandate
+  syncTxns: true,     // pull transactions from the linked app's notifications
+  linkedAt: null,
+};
+
+const initialProfile = {
+  displayName: "Anamika",
+  handle: "anamika.aura",
+  email: "anamika@auraloop.app",
+  avatarEmoji: "🌅",
+  avatarImage: null,  // base64 data URL — takes precedence over emoji when set
+  joinedAt: null,     // backfilled to first-write timestamp
+};
+
 export const useAuraStore = create(
   persist(
     (set, get) => ({
@@ -49,10 +67,16 @@ export const useAuraStore = create(
       wrappedData: initialWrapped,
       insights: initialInsights,
       settings: initialSettings,
+      upi: initialUpi,
+      profile: initialProfile,
+      memeNonce: 0, // bumps on every transactional action — UI uses this to fire memes
 
       // ───── actions ─────
       addTransaction: (txn) =>
-        set((s) => ({ transactions: [txn, ...s.transactions] })),
+        set((s) => ({
+          transactions: [txn, ...s.transactions],
+          memeNonce: s.memeNonce + 1,
+        })),
 
       removeTransaction: (id) =>
         set((s) => ({ transactions: s.transactions.filter((t) => t.id !== id) })),
@@ -65,7 +89,10 @@ export const useAuraStore = create(
           jars: s.jars.map((j) =>
             j.id === jarId ? { ...j, saved: Math.min(j.target, j.saved + amount) } : j,
           ),
+          memeNonce: s.memeNonce + 1,
         })),
+
+      bumpMeme: () => set((s) => ({ memeNonce: s.memeNonce + 1 })),
 
       removeJar: (jarId) =>
         set((s) => ({ jars: s.jars.filter((j) => j.id !== jarId) })),
@@ -77,6 +104,34 @@ export const useAuraStore = create(
 
       updateSettings: (patch) =>
         set((s) => ({ settings: { ...s.settings, ...patch } })),
+
+      // ── UPI ────────────────────────────────────────────────────
+      linkUpi: ({ appId, vpa }) =>
+        set(() => ({
+          upi: {
+            linked: true,
+            appId,
+            vpa,
+            autoDebit: false,
+            syncTxns: true,
+            linkedAt: Date.now(),
+          },
+        })),
+
+      unlinkUpi: () => set(() => ({ upi: { ...initialUpi } })),
+
+      updateUpi: (patch) =>
+        set((s) => ({ upi: { ...s.upi, ...patch } })),
+
+      // ── Profile ──────────────────────────────────────────────
+      updateProfile: (patch) =>
+        set((s) => ({
+          profile: {
+            ...s.profile,
+            ...patch,
+            joinedAt: s.profile.joinedAt || Date.now(),
+          },
+        })),
 
       // ───── selectors (computed via getters) ─────
       getTotalSaved: () => sumSaved(get().transactions),
@@ -93,6 +148,8 @@ export const useAuraStore = create(
           wrappedData: initialWrapped,
           insights: initialInsights,
           settings: initialSettings,
+          upi: initialUpi,
+          profile: initialProfile,
         }),
     }),
     {
@@ -107,6 +164,8 @@ export const useAuraStore = create(
         wrappedData: s.wrappedData,
         insights: s.insights,
         settings: s.settings,
+        upi: s.upi,
+        profile: s.profile,
       }),
     },
   ),

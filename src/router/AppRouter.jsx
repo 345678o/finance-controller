@@ -7,10 +7,16 @@ import Insights from "@/pages/Insights";
 import Profile from "@/pages/Profile";
 import Settings from "@/pages/Settings";
 import FutureVision from "@/pages/FutureVision";
+import ARScan from "@/pages/ARScan";
 import ImportSms from "@/pages/ImportSms";
 import NotFound from "@/pages/NotFound";
 
 const router = createBrowserRouter([
+  {
+    path: "/scan",
+    element: <ARScan />,
+    errorElement: <NotFound />,
+  },
   {
     path: "/",
     element: <AppShell />,

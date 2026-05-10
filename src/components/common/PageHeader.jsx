@@ -21,7 +21,7 @@ export default function PageHeader({ title, onProfile }) {
           onClick={() => setOpen(true)}
           aria-label="Open menu"
           aria-expanded={open}
-          className="grid h-11 w-11 place-items-center rounded-2xl border-2 border-[#0F172A] bg-[#F5C842] shadow-[3px_3px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none"
+          className="grid h-11 w-11 place-items-center rounded-2xl border-2 border-[#0F172A] bg-[var(--t-primary)] shadow-[3px_3px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none"
         >
           <LayoutGrid size={20} strokeWidth={2.6} className="text-[#0F172A]" />
         </button>
@@ -31,7 +31,7 @@ export default function PageHeader({ title, onProfile }) {
         </h1>
 
         <button onClick={onProfile} aria-label="Profile" className="relative">
-          <div className="grid h-11 w-11 place-items-center rounded-2xl border-2 border-[#0F172A] bg-[#FF8C7A] shadow-[3px_3px_0_#0F172A]">
+          <div className="grid h-11 w-11 place-items-center rounded-2xl border-2 border-[#0F172A] bg-[var(--t-accent)] shadow-[3px_3px_0_#0F172A]">
             <span className="text-[14px] font-extrabold text-[#0F172A]">
               {USER.initial}
             </span>

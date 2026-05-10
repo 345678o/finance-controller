@@ -33,7 +33,7 @@ export default function Insights() {
 
   return (
     <>
-      <div className="fixed inset-0 bg-[#F5F1E8]" aria-hidden />
+      <div className="fixed inset-0 bg-[var(--t-bg)]" aria-hidden />
 
       <div className="relative space-y-4">
         <PageHeader title="Insights" />
@@ -124,7 +124,7 @@ function WeeklyTrend({ series, weekOverWeek, delay }) {
                     ease: [0.16, 1, 0.3, 1],
                   }}
                   className="w-full rounded-md border-2 border-[#0F172A]"
-                  style={{ background: isToday ? "#F5C842" : "#FFFFFF" }}
+                  style={{ background: isToday ? "var(--t-primary)" : "#FFFFFF" }}
                 />
               </div>
               <span
@@ -171,7 +171,7 @@ function Meters({ meters, delay }) {
           Icon={ShieldCheck}
           label="Discipline"
           value={discipline}
-          fill="#5DD3CB"
+          fill="var(--t-secondary)"
           status={discipline >= 70 ? "Strong" : discipline >= 50 ? "Holding" : "Slipping"}
           color={discipline >= 70 ? "teal" : discipline >= 50 ? "mustard" : "coral"}
         />
@@ -179,7 +179,7 @@ function Meters({ meters, delay }) {
           Icon={Zap}
           label="Impulse risk"
           value={impulseRisk}
-          fill={impulseRisk < 30 ? "#5DD3CB" : impulseRisk < 60 ? "#F5C842" : "#FF8C7A"}
+          fill={impulseRisk < 30 ? "var(--t-secondary)" : impulseRisk < 60 ? "var(--t-primary)" : "var(--t-accent)"}
           status={impulseRiskBand}
           color={impulseRisk < 30 ? "teal" : impulseRisk < 60 ? "mustard" : "coral"}
         />
@@ -187,7 +187,7 @@ function Meters({ meters, delay }) {
           Icon={Activity}
           label="Savings stability"
           value={savingsStability}
-          fill="#C4B5FD"
+          fill="var(--t-lilac)"
           status={savingsStability >= 70 ? "Strong" : savingsStability >= 50 ? "Even" : "Weak"}
           color="lavender"
         />
@@ -230,7 +230,7 @@ function InvisibleSpend({ invisible, delay }) {
   return (
     <OutlinedCard className="overflow-hidden p-5" delay={delay}>
       <header className="flex items-start gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border-2 border-[#0F172A] bg-[#FF8C7A]">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border-2 border-[#0F172A] bg-[var(--t-accent)]">
           <EyeOff size={16} strokeWidth={2.6} className="text-[#0F172A]" />
         </span>
         <div>
@@ -253,7 +253,7 @@ function InvisibleSpend({ invisible, delay }) {
           {invisible.breakdown.map((b) => (
             <li
               key={b.label}
-              className="flex items-center justify-between rounded-xl border-2 border-[#0F172A] bg-[#F5F1E8] px-3 py-2 text-[13px]"
+              className="flex items-center justify-between rounded-xl border-2 border-[#0F172A] bg-[var(--t-bg)] px-3 py-2 text-[13px]"
             >
               <span className="font-bold text-[#0F172A]">{b.label}</span>
               <span className="num font-extrabold text-[#0F172A]">{inr(b.amount)}</span>

@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import TopNav from "@/components/common/TopNav";
 import BottomNav from "@/components/common/BottomNav";
+import MemeToast from "@/components/common/MemeToast";
 import useAndroidBackButton from "@/hooks/useAndroidBackButton";
 
 export default function AppShell() {
@@ -18,6 +19,7 @@ export default function AppShell() {
       </main>
 
       <BottomNav />
+      <MemeToast />
     </div>
   );
 }

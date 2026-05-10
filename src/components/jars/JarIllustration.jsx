@@ -13,6 +13,23 @@ const ICON_MAP = {
 const W = 96;
 const H = 124;
 
+/* Build a path that draws the liquid: a wavy top edge, then straight down + across.
+   `phase` shifts where the wave crest sits so successive frames animate naturally. */
+function buildWavyPath(top, left, right, bottom, phase = 0) {
+  const amp = 1.6;                      // wave height in svg units
+  const offset = phase * (right - left); // horizontal phase shift
+  const cp1x = left  + (right - left) * 0.25 + offset * 0.2;
+  const cp2x = left  + (right - left) * 0.75 + offset * 0.2;
+  const cp1y = top - amp;
+  const cp2y = top + amp;
+  return `
+    M ${left - 2} ${top}
+    C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${right + 2} ${top}
+    L ${right + 2} ${bottom}
+    L ${left  - 2} ${bottom}
+    Z`;
+}
+
 // Jar body geometry
 const BODY_TOP    = 26;
 const BODY_BOTTOM = 112;
@@ -106,49 +123,87 @@ export default function JarIllustration({ color, fillPct, iconKey }) {
 
         {/* Liquid (clipped to jar interior) */}
         <g clipPath={`url(#${id}-clip)`}>
-          <motion.rect
-            x={BODY_LEFT - 2}
-            width={BODY_RIGHT - BODY_LEFT + 4}
-            initial={{ y: BODY_BOTTOM, height: 0 }}
-            animate={{ y: liquidTop, height: liquidH }}
-            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+          {/* Wavy liquid surface — animates a sine-wave path so the level breathes. */}
+          <motion.path
+            initial={{ d: buildWavyPath(BODY_BOTTOM, BODY_LEFT, BODY_RIGHT, BODY_BOTTOM, 0) }}
+            animate={{
+              d: [
+                buildWavyPath(liquidTop, BODY_LEFT, BODY_RIGHT, BODY_BOTTOM, 0),
+                buildWavyPath(liquidTop, BODY_LEFT, BODY_RIGHT, BODY_BOTTOM, 0.5),
+                buildWavyPath(liquidTop, BODY_LEFT, BODY_RIGHT, BODY_BOTTOM, 1),
+              ],
+            }}
+            transition={{
+              d: { duration: 4.2, repeat: Infinity, ease: "easeInOut" },
+            }}
             fill={color}
           />
-          {/* meniscus line */}
-          {safePct > 0 && (
-            <motion.line
-              x1={BODY_LEFT - 2}
-              x2={BODY_RIGHT + 2}
-              initial={{ y1: BODY_BOTTOM, y2: BODY_BOTTOM }}
-              animate={{ y1: liquidTop, y2: liquidTop }}
-              transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-              stroke={STROKE}
-              strokeWidth={1}
-              opacity={0.35}
+          {/* Lighter "shine" stripe just under the meniscus */}
+          {safePct > 6 && (
+            <motion.rect
+              x={BODY_LEFT - 2}
+              width={BODY_RIGHT - BODY_LEFT + 4}
+              height={2}
+              fill="rgba(255,255,255,0.45)"
+              initial={{ y: BODY_BOTTOM }}
+              animate={{ y: [liquidTop + 4, liquidTop + 5, liquidTop + 4] }}
+              transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
             />
           )}
-          {/* sparkles bobbing in liquid */}
+          {/* Bubbles rising — only when there's enough liquid to host them */}
           {safePct > 14 && (
             <>
               <motion.circle
-                cx={W * 0.36}
-                r={1.2}
-                fill="rgba(255,255,255,0.7)"
-                initial={{ cy: BODY_BOTTOM }}
-                animate={{ cy: [liquidTop + 14, liquidTop + 18, liquidTop + 14] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                cx={W * 0.34}
+                r={1.4}
+                fill="rgba(255,255,255,0.85)"
+                initial={{ cy: BODY_BOTTOM, opacity: 0 }}
+                animate={{
+                  cy: [BODY_BOTTOM - 2, liquidTop + 4],
+                  opacity: [0, 0.9, 0],
+                }}
+                transition={{ duration: 3.4, repeat: Infinity, ease: "easeOut", delay: 0.3 }}
               />
               <motion.circle
                 cx={W * 0.62}
-                r={1}
-                fill="rgba(255,255,255,0.6)"
-                initial={{ cy: BODY_BOTTOM }}
-                animate={{ cy: [liquidTop + 26, liquidTop + 22, liquidTop + 26] }}
-                transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
+                r={1.1}
+                fill="rgba(255,255,255,0.75)"
+                initial={{ cy: BODY_BOTTOM, opacity: 0 }}
+                animate={{
+                  cy: [BODY_BOTTOM - 6, liquidTop + 6],
+                  opacity: [0, 0.8, 0],
+                }}
+                transition={{ duration: 4.0, repeat: Infinity, ease: "easeOut", delay: 1.4 }}
+              />
+              <motion.circle
+                cx={W * 0.5}
+                r={0.9}
+                fill="rgba(255,255,255,0.7)"
+                initial={{ cy: BODY_BOTTOM, opacity: 0 }}
+                animate={{
+                  cy: [BODY_BOTTOM - 4, liquidTop + 5],
+                  opacity: [0, 0.7, 0],
+                }}
+                transition={{ duration: 4.6, repeat: Infinity, ease: "easeOut", delay: 2.6 }}
               />
             </>
           )}
         </g>
+
+        {/* Soft outer glow when the jar is nearly funded */}
+        {safePct >= 80 && (
+          <motion.ellipse
+            cx={W / 2}
+            cy={(BODY_TOP + BODY_BOTTOM) / 2}
+            rx={36}
+            ry={48}
+            fill={color}
+            opacity={0.18}
+            animate={{ opacity: [0.12, 0.24, 0.12] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+            style={{ filter: "blur(8px)" }}
+          />
+        )}
       </svg>
 
       {/* Icon centered in liquid (white, no glow halo on cream) */}

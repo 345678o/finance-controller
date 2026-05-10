@@ -26,6 +26,13 @@ import { inr, inrCompact }          from "@/utils/format";
 
 import PageHeader               from "@/components/common/PageHeader";
 import { TabStrip }             from "@/components/common/Outlined";
+import SplitText                from "@/components/effects/SplitText";
+import BlurText                 from "@/components/effects/BlurText";
+import ScrollReveal             from "@/components/effects/ScrollReveal";
+import ShinyText                from "@/components/effects/ShinyText";
+import CheckBalance             from "@/components/dashboard/CheckBalance";
+import MoneyFlow                from "@/components/dashboard/MoneyFlow";
+import SavingsList              from "@/components/dashboard/SavingsList";
 
 const TABS = ["Overview", "Saved", "Spent", "Goals"];
 
@@ -43,96 +50,14 @@ export default function Dashboard() {
       {/* Mobile header (replaced by TopNav on desktop) */}
       <PageHeader title="Home" />
 
-      {/* ── HERO ───────────────────────────────────────────────────── */}
-      <section className="mt-4 md:mt-6 grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-7 items-stretch">
-        {/* Left: heading + search */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="lg:col-span-7"
-        >
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[var(--t-ink-faint)]">
-            Dashboard · {new Date().toLocaleDateString("en-IN", { weekday: "long" })}
-          </p>
-          <h1 className="mt-2 text-[28px] md:text-[44px] lg:text-[52px] font-extrabold leading-[1.04] tracking-tight text-[var(--t-ink)]">
-            Saving Everyday,
-            <br className="hidden md:block" />{" "}
-            <span
-              className="rounded-2xl border-2 px-3 py-0.5 inline-block"
-              style={{
-                borderColor: "var(--t-line)",
-                background: "var(--t-primary)",
-                boxShadow: "4px 4px 0 var(--t-line)",
-              }}
-            >
-              one round-up
-            </span>{" "}
-            at a time.
-          </h1>
-          <p className="mt-4 max-w-xl text-[14px] md:text-[15px] leading-relaxed text-[var(--t-ink-muted)]">
-            Track every spend, grow your aura, and watch tiny round-ups stack
-            into real savings. Your calm money loop, in one place.
-          </p>
+      {/* ── CHECK BALANCE — premium dark hero with coin-filling jar ── */}
+      <CheckBalance />
 
-          {/* Search + quick CTA */}
-          <div className="mt-5 flex flex-col sm:flex-row items-stretch gap-3">
-            <div className="relative flex-1">
-              <Search
-                size={17}
-                strokeWidth={2.4}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--t-ink)]"
-              />
-              <input
-                type="text"
-                placeholder="Search transactions, jars, merchants…"
-                className="w-full rounded-2xl border-2 py-3.5 pl-11 pr-4 text-[14px] font-medium placeholder:text-[var(--t-ink-faint)] focus:translate-y-[2px] focus:shadow-none focus:outline-none transition-transform"
-                style={{
-                  borderColor: "var(--t-line)",
-                  background: "var(--t-card)",
-                  color: "var(--t-ink)",
-                  boxShadow: "3px 3px 0 var(--t-line)",
-                }}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate("/jars")}
-              className="stamp-btn !py-3.5 !px-5"
-              style={{ background: "var(--t-primary)" }}
-            >
-              <Plus size={16} strokeWidth={2.8} />
-              New goal jar
-            </button>
-          </div>
+      {/* ── MONEY FLOW — saved vs spent breakdown ─────────────────── */}
+      <MoneyFlow />
 
-          {/* Tabs (animated indicator) */}
-          <div className="mt-6">
-            <TabStrip
-              tabs={TABS}
-              active={tab}
-              onChange={setTab}
-              layoutId="dashboard-tab-underline"
-            />
-          </div>
-        </motion.div>
-
-        {/* Right: aura mini-card + quick stats summary */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-          className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4"
-        >
-          <AuraMiniCard score={d.auraScore} aura={aura} />
-          <QuickSummary
-            totalSaved={animatedSaved}
-            monthSaved={d.monthSaved}
-            txnCount={d.transactions.length}
-            stability={d.stability}
-          />
-        </motion.div>
-      </section>
+      {/* ── YOUR SAVINGS — list of all goal jars ──────────────────── */}
+      <SavingsList />
 
       {/* ── 4-CARD GRID ────────────────────────────────────────────── */}
       <section className="mt-7 md:mt-9 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -171,16 +96,16 @@ export default function Dashboard() {
       </section>
 
       {/* ── TWO-COLUMN BLOCK: Trends + Goal Progress ──────────────── */}
-      <section className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <ScrollReveal as="section" className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
         <TrendsCard series={series} delta={percentDelta(series)} />
         <GoalProgressCard progress={d.goalProgress} />
-      </section>
+      </ScrollReveal>
 
       {/* ── THREE-COLUMN BLOCK: Recent Activity + Quick Actions ────── */}
-      <section className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <ScrollReveal as="section" delay={0.05} className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
         <RecentActivityCard txns={d.recentTxns} />
         <QuickActionsCard />
-      </section>
+      </ScrollReveal>
     </>
   );
 }
@@ -299,7 +224,9 @@ function AuraMiniCard({ score, aura }) {
             />
           </svg>
           <div className="absolute inset-0 grid place-items-center">
-            <span className="num text-[20px] font-extrabold">{score}%</span>
+            <span className="num text-[20px] font-extrabold">
+              <ShinyText speed={5}>{score}%</ShinyText>
+            </span>
           </div>
         </div>
         <div className="min-w-0">

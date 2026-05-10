@@ -1,10 +1,11 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Home, Target, BarChart3, Sparkles, User } from "lucide-react";
+import { Home, Target, ScanLine, BarChart3, Sparkles, User } from "lucide-react";
 
 const NAV = [
   { to: "/",         label: "Home",     icon: Home },
   { to: "/jars",     label: "Jars",     icon: Target },
+  { to: "/scan",     label: "Scan",     icon: ScanLine },
   { to: "/insights", label: "Insights", icon: BarChart3 },
   { to: "/wrapped",  label: "Wrapped",  icon: Sparkles },
   { to: "/profile",  label: "Profile",  icon: User },
