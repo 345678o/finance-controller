@@ -14,10 +14,12 @@ import {
   ReceiptText,
   TrendingUp,
   SwitchCamera,
+  Loader2,
 } from "lucide-react";
 
 import { useAuraStore } from "@/store/useAuraStore";
 import { inr, inrCompact } from "@/utils/format";
+import { captureVideoToCanvas, runReceiptOcr } from "@/utils/receiptOcr";
 
 /* ───────── Scenario library ─────────
    Each scenario is calibrated against believable urban-India spend patterns
@@ -104,9 +106,146 @@ const CATEGORIES = [
 ];
 
 function projectScenario(s) {
+  // If we computed dynamic numbers from the user's actual transactions, use
+  // those. Otherwise fall back to the curated demo defaults.
+  if (s.dynamic && s.dynamicMonthly !== undefined) {
+    return {
+      monthly: s.dynamicMonthly,
+      yearly:  s.dynamicYearly ?? s.dynamicMonthly * 12,
+    };
+  }
   const yearly  = Math.round(s.perUnit * s.perDay * s.daysPerYear);
   const monthly = Math.round(yearly / 12);
   return { yearly, monthly };
+}
+
+/* Pull live numbers per category from the user's transactions.
+   Returns an enriched copy of SCENARIOS where each entry has:
+   - dynamic:        true if the user has any txns in that category
+   - dynamicMonthly: avg monthly spend (last 90 days, scaled to a month)
+   - dynamicYearly:  yearly projection from that rate
+   - topMerchant:    most frequent merchant in this category
+   - txnCount:       how many txns over the lookback window
+   - perUnit:        avg ₹ per txn (replaces the hardcoded perUnit)
+   - insight:        a real-data insight string when there's enough signal */
+function buildDynamicScenarios(transactions) {
+  const out = {};
+  // Map our scenario keys → real category labels in the txn store.
+  const map = {
+    coffee:       ["Cafes"],
+    food:         ["Food"],
+    shopping:     ["Shopping", "Beauty"],
+    subscription: ["Subscriptions"],
+    cab:          ["Transport"],
+  };
+
+  const now = Date.now();
+  const window = 90 * 86400000; // 90-day lookback for stable averages
+  const monthMs = 30 * 86400000;
+
+  for (const [key, cats] of Object.entries(map)) {
+    const base = SCENARIOS[key];
+    const txns = transactions.filter((t) => {
+      if (!cats.includes(t.category)) return false;
+      const d = new Date(t.timestamp).getTime();
+      return now - d <= window;
+    });
+    if (txns.length === 0) {
+      out[key] = { ...base, dynamic: false };
+      continue;
+    }
+
+    const total       = txns.reduce((sum, t) => sum + (t.amount || 0), 0);
+    const perUnit     = Math.max(20, Math.round(total / txns.length));
+    const dailyRate   = total / 90;
+    const monthly     = Math.max(0, Math.round(dailyRate * 30));
+    const yearly      = Math.max(0, Math.round(dailyRate * 365));
+
+    // Top merchant by frequency, then by spend.
+    const merchantMap = new Map();
+    for (const t of txns) {
+      const cur = merchantMap.get(t.merchant) || { count: 0, total: 0 };
+      cur.count += 1;
+      cur.total += t.amount || 0;
+      merchantMap.set(t.merchant, cur);
+    }
+    const topMerchant =
+      [...merchantMap.entries()]
+        .sort((a, b) => b[1].count - a[1].count || b[1].total - a[1].total)[0]?.[0] ?? null;
+
+    // Insight: real numbers + recent-30-day vs prior-30-day delta.
+    const recent = txns.filter((t) => now - new Date(t.timestamp).getTime() <= monthMs);
+    const prior  = txns.filter((t) => {
+      const age = now - new Date(t.timestamp).getTime();
+      return age > monthMs && age <= 2 * monthMs;
+    });
+    const recentTotal = recent.reduce((s, t) => s + t.amount, 0);
+    const priorTotal  = prior.reduce((s, t) => s + t.amount, 0);
+
+    let insight = base.insight;
+    if (priorTotal > 0) {
+      const delta = Math.round(((recentTotal - priorTotal) / priorTotal) * 100);
+      if (Math.abs(delta) >= 8) {
+        insight =
+          delta > 0
+            ? `${base.title.replace(/^\w/, (c) => c.toUpperCase())} spending up ${delta}% this month.`
+            : `${base.title.replace(/^\w/, (c) => c.toUpperCase())} spending down ${Math.abs(delta)}% this month.`;
+      }
+    } else if (topMerchant) {
+      insight = `${topMerchant} is doing the heavy lifting on this habit.`;
+    }
+
+    out[key] = {
+      ...base,
+      perUnit,
+      dynamic: true,
+      dynamicMonthly: monthly,
+      dynamicYearly:  yearly,
+      topMerchant,
+      txnCount: txns.length,
+      insight,
+    };
+  }
+  return out;
+}
+
+/* Build a one-off scenario from a scanned receipt. We assume the user does
+   this kind of purchase weekly — a deliberately conservative cadence so the
+   yearly projection stays believable. */
+function buildOcrScenario({ amount, merchant }) {
+  const monthly = amount * 4;        // 4 visits / month
+  const yearly  = amount * 52;       // 52 visits / year
+  const title = merchant ? `${merchant} habit` : "This purchase, weekly";
+  return {
+    key: "ocr",
+    title,
+    perUnit: amount,
+    cadence: "/visit",
+    perDay: 1 / 7,
+    daysPerYear: 365,
+    Icon: ReceiptText,
+    accent: "#5EEAD4",
+    soft: "rgba(94, 234, 212, 0.16)",
+    insight: merchant
+      ? `Receipt scanned at ${merchant} for ${formatRupees(amount)}.`
+      : `Receipt scanned for ${formatRupees(amount)}.`,
+    delayMonths: amount > 500 ? 4 : amount > 200 ? 2 : 1,
+    swap: "Stretch this between fewer visits — even one less per month adds up.",
+    dynamic: true,
+    dynamicMonthly: monthly,
+    dynamicYearly:  yearly,
+    topMerchant: merchant,
+    txnCount: 1,
+    fromOcr: true,
+  };
+}
+
+function formatRupees(n) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(Number(n) || 0);
 }
 
 function buildEquivalents(yearly, jars) {
@@ -134,6 +273,7 @@ export default function ARScan() {
   const sceneRef = useRef(null);
 
   const jars = useAuraStore((s) => s.jars);
+  const transactions = useAuraStore((s) => s.transactions);
 
   const [camState, setCamState] = useState("requesting"); // requesting | live | denied | unsupported
   const [facingMode, setFacingMode] = useState("environment"); // "environment" (rear) | "user" (front)
@@ -142,6 +282,25 @@ export default function ARScan() {
   const [scanState, setScanState] = useState("idle");
   const [pendingKey, setPendingKey] = useState(null);
   const scanTimers = useRef([]);
+
+  // OCR — receipt scanning state
+  // ocrState: idle | scanning | failed
+  const [ocrState, setOcrState]       = useState("idle");
+  const [ocrProgress, setOcrProgress] = useState(0);
+  const [ocrError, setOcrError]       = useState(null);
+  const [ocrResult, setOcrResult]     = useState(null); // { amount, merchant }
+
+  // Dynamic scenarios — recomputed whenever transactions change.
+  // When OCR returns a result, we fold a synthetic "ocr" scenario into the
+  // map so the rest of the pipeline (analysis stages, insight card) flows
+  // through unchanged.
+  const dynamicScenarios = useMemo(() => {
+    const base = buildDynamicScenarios(transactions);
+    if (ocrResult) {
+      base.ocr = buildOcrScenario(ocrResult);
+    }
+    return base;
+  }, [transactions, ocrResult]);
 
   const scanning = scanState !== "idle" && scanState !== "result";
 
@@ -353,11 +512,46 @@ export default function ARScan() {
     setActiveKey(null);
     setScanState("idle");
     setPendingKey(null);
+    // Drop OCR result on close so re-opening doesn't show a stale receipt.
+    setOcrResult(null);
+  }
+
+  /* OCR — capture the current camera frame and run Tesseract on it. */
+  async function handleScanReceipt() {
+    if (ocrState === "scanning") return;
+    if (camState !== "live" || !videoRef.current) {
+      setOcrError("Allow camera access first, then point it at a receipt.");
+      setOcrState("failed");
+      setTimeout(() => setOcrState("idle"), 2400);
+      return;
+    }
+    setOcrState("scanning");
+    setOcrProgress(0);
+    setOcrError(null);
+
+    try {
+      const canvas = captureVideoToCanvas(videoRef.current);
+      const result = await runReceiptOcr(canvas, (p) => setOcrProgress(p));
+      // Inject the synthetic scenario, then run the standard 3-stage analysis
+      // animation so the reveal feels consistent with the category buttons.
+      setOcrResult(result);
+      setOcrState("idle");
+      activate("ocr");
+    } catch (e) {
+      console.warn("[ar-scan] OCR failed:", e?.message);
+      setOcrError(
+        e?.message?.includes("amount")
+          ? "Couldn't find an amount. Try better lighting and hold still."
+          : "Couldn't read that receipt. Try again with better lighting.",
+      );
+      setOcrState("failed");
+      setTimeout(() => setOcrState("idle"), 3000);
+    }
   }
 
   useEffect(() => () => clearScanTimers(), []);
 
-  const active = activeKey ? SCENARIOS[activeKey] : null;
+  const active = activeKey ? dynamicScenarios[activeKey] : null;
   const projection = useMemo(() => (active ? projectScenario(active) : null), [active]);
   const equivalents = useMemo(
     () => (active && projection ? buildEquivalents(projection.yearly, jars) : []),
@@ -449,14 +643,14 @@ export default function ARScan() {
         >
           <ScanFrame scanning={scanning} />
           <FloatingAnchor
-            scenario={active || (pendingKey ? SCENARIOS[pendingKey] : null)}
+            scenario={active || (pendingKey ? dynamicScenarios[pendingKey] : null)}
             scanning={scanning}
             idle={!active && !scanning}
             detected={detected}
           />
           <DetectionTicker
             scanState={scanState}
-            scenario={pendingKey ? SCENARIOS[pendingKey] : null}
+            scenario={pendingKey ? dynamicScenarios[pendingKey] : null}
           />
         </motion.div>
       </div>
@@ -502,15 +696,20 @@ export default function ARScan() {
           </button>
           <button
             type="button"
-            onClick={() => alert("Receipt OCR is coming next — point at any printed bill.")}
+            onClick={handleScanReceipt}
+            disabled={ocrState === "scanning"}
             aria-label="Scan receipt"
-            className="grid h-10 w-10 place-items-center rounded-full backdrop-blur-md transition active:scale-95"
+            className="grid h-10 w-10 place-items-center rounded-full backdrop-blur-md transition active:scale-95 disabled:opacity-70"
             style={{
               background: "rgba(15, 23, 42, 0.55)",
               boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12)",
             }}
           >
-            <ReceiptText size={17} strokeWidth={2} className="text-[#5EEAD4]" />
+            {ocrState === "scanning" ? (
+              <Loader2 size={16} strokeWidth={2.2} className="animate-spin text-[#5EEAD4]" />
+            ) : (
+              <ReceiptText size={17} strokeWidth={2} className="text-[#5EEAD4]" />
+            )}
           </button>
         </div>
       </div>
@@ -555,6 +754,60 @@ export default function ARScan() {
               tiltY={sY}
             />
           </>
+        )}
+      </AnimatePresence>
+
+      {/* ── OCR progress / error toast ─────────────────────────────── */}
+      <AnimatePresence>
+        {ocrState === "scanning" && (
+          <motion.div
+            key="ocr-progress"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.3 }}
+            className="pointer-events-none absolute left-1/2 top-[8%] z-30 -translate-x-1/2 px-4"
+          >
+            <div
+              className="flex items-center gap-2.5 rounded-full px-4 py-2 backdrop-blur-md"
+              style={{
+                background: "rgba(15, 23, 42, 0.65)",
+                boxShadow: "inset 0 0 0 1px rgba(94, 234, 212, 0.4)",
+              }}
+            >
+              <Loader2
+                size={14}
+                strokeWidth={2.4}
+                className="animate-spin text-[#5EEAD4]"
+              />
+              <span className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-white/85">
+                Reading receipt · {Math.round(ocrProgress * 100)}%
+              </span>
+            </div>
+          </motion.div>
+        )}
+        {ocrState === "failed" && ocrError && (
+          <motion.div
+            key="ocr-failed"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.3 }}
+            className="absolute left-1/2 top-[8%] z-30 -translate-x-1/2 px-4"
+          >
+            <div
+              className="rounded-2xl px-4 py-2.5 text-center backdrop-blur-md"
+              style={{
+                background: "rgba(244, 114, 182, 0.18)",
+                boxShadow: "inset 0 0 0 1px rgba(244, 114, 182, 0.55)",
+                maxWidth: "min(86vw, 360px)",
+              }}
+            >
+              <p className="text-[12px] font-medium leading-snug text-white">
+                {ocrError}
+              </p>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -720,7 +973,31 @@ function InsightCard({ scenario, projection, equivalents, onClose, tiltX, tiltY 
           <h3 className="mt-1 text-[18px] font-semibold leading-snug tracking-tight text-white">
             {scenario.title}
           </h3>
+          {/* Live signal — visible when we have user data backing this up */}
+          {scenario.dynamic && (
+            <p className="mt-1 text-[11px] text-white/55">
+              {scenario.txnCount} {scenario.txnCount === 1 ? "txn" : "txns"} in 90d
+              {scenario.topMerchant ? ` · top: ${scenario.topMerchant}` : ""}
+            </p>
+          )}
         </div>
+        {scenario.dynamic && (
+          <span
+            className="ml-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.18em]"
+            style={{
+              color: scenario.accent,
+              background: scenario.soft,
+              boxShadow: `inset 0 0 0 1px ${scenario.accent}55`,
+            }}
+          >
+            <span
+              aria-hidden
+              className="block h-1.5 w-1.5 rounded-full"
+              style={{ background: scenario.accent }}
+            />
+            Live
+          </span>
+        )}
       </div>
 
       {/* Spend numbers */}

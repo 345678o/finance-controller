@@ -9,11 +9,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { useAuraStore } from "@/store/useAuraStore";
-import useDashboardData from "@/hooks/useDashboardData";
-import {
-  dailySpendSeries,
-  weekOverWeek,
-} from "@/utils/dashboard";
+import { computeInsightsForPeriod } from "@/utils/dashboard";
 import useCountUp from "@/hooks/useCountUp";
 import { inr } from "@/utils/format";
 import { metaForCategory } from "@/utils/categoryMeta";
@@ -25,11 +21,12 @@ const TABS = ["This week", "Last week", "Month", "Year"];
 
 export default function Insights() {
   const transactions = useAuraStore((s) => s.transactions);
-  const d            = useDashboardData();
   const [tab, setTab] = useState("This week");
 
-  const series = useMemo(() => dailySpendSeries(transactions, 7), [transactions]);
-  const wow    = useMemo(() => weekOverWeek(transactions),         [transactions]);
+  const insights = useMemo(
+    () => computeInsightsForPeriod(transactions, tab),
+    [transactions, tab],
+  );
 
   return (
     <>
@@ -38,15 +35,16 @@ export default function Insights() {
       <div className="relative space-y-4">
         <PageHeader title="Insights" />
 
-        {/* Hero */}
+        {/* Hero — title swaps with the timeline */}
         <motion.section
+          key={tab}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.04, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="mt-5"
         >
           <h2 className="text-[26px] font-extrabold leading-tight tracking-tight text-[#0F172A]">
-            Patterns this week
+            {insights.copy.title}
           </h2>
           <p className="mt-1.5 text-[13px] leading-relaxed text-[#475569]">
             Tiny nudges that catch the spends you don't notice.
@@ -67,35 +65,37 @@ export default function Insights() {
           />
         </motion.div>
 
-        <WeeklyTrend series={series} weekOverWeek={wow} delay={0.12} />
-        <Meters meters={d.meters} delay={0.16} />
-        <InvisibleSpend invisible={d.invisible} delay={0.2} />
-        <TopCategories breakdown={d.categoryBreakdown} delay={0.24} />
+        <PeriodTrend insights={insights} delay={0.12} />
+        <Meters meters={insights.meters} delay={0.16} />
+        <InvisibleSpend invisible={insights.invisible} sub={insights.copy.invisibleSub} delay={0.2} />
+        <TopCategories breakdown={insights.breakdown} delay={0.24} />
       </div>
     </>
   );
 }
 
-// ── Weekly trend (big card) ────────────────────────────────────────────
-function WeeklyTrend({ series, weekOverWeek, delay }) {
-  const max = Math.max(...series.map((s) => s.total), 1);
-  const thisWk = useCountUp(weekOverWeek.thisWk, 1.4);
-  const isUp = weekOverWeek.delta >= 0;
+// ── Period trend (big card) ───────────────────────────────────────────
+function PeriodTrend({ insights, delay }) {
+  const { series, totalCurrent, totalPrior, delta, copy, period } = insights;
+  const max     = Math.max(...series.map((s) => s.total), 1);
+  const current = useCountUp(totalCurrent, 1.0, [period]);
+  const isUp    = delta >= 0;
   const pillColor = isUp ? "coral" : "teal";
+
+  // Year view = 12 monthly bars → tighter spacing + first-letter labels.
+  const dense = series.length > 8;
 
   return (
     <OutlinedCard className="p-5" delay={delay}>
       <div className="flex items-start justify-between">
         <div>
           <p className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#475569]">
-            This week
+            {copy.currentLabel}
           </p>
           <p className="num mt-1 text-[28px] font-extrabold leading-none tracking-tight text-[#0F172A]">
-            {inr(thisWk)}
+            {inr(current)}
           </p>
-          <p className="mt-1 text-[12px] text-[#64748B]">
-            spent across 7 days
-          </p>
+          <p className="mt-1 text-[12px] text-[#64748B]">{copy.spread}</p>
         </div>
         <StampPill color={pillColor}>
           {isUp ? (
@@ -104,14 +104,17 @@ function WeeklyTrend({ series, weekOverWeek, delay }) {
             <TrendingDown size={12} strokeWidth={2.6} />
           )}
           {isUp ? "+" : ""}
-          {weekOverWeek.delta}%
+          {delta}%
         </StampPill>
       </div>
 
-      <div className="mt-5 flex h-[88px] items-end justify-between gap-1.5">
-        {series.map((d, idx) => {
-          const h = max ? (d.total / max) * 100 : 0;
-          const isToday = idx === series.length - 1;
+      <div
+        key={period}
+        className={"mt-5 flex h-[88px] items-end justify-between " + (dense ? "gap-0.5" : "gap-1.5")}
+      >
+        {series.map((bucket, idx) => {
+          const h = max ? (bucket.total / max) * 100 : 0;
+          const isLast = idx === series.length - 1;
           return (
             <div key={idx} className="flex flex-1 flex-col items-center gap-1.5">
               <div className="flex h-[64px] w-full items-end">
@@ -119,21 +122,21 @@ function WeeklyTrend({ series, weekOverWeek, delay }) {
                   initial={{ height: 0 }}
                   animate={{ height: `${Math.max(h, 4)}%` }}
                   transition={{
-                    duration: 0.7,
-                    delay: 0.18 + idx * 0.04,
+                    duration: 0.6,
+                    delay: 0.12 + idx * 0.03,
                     ease: [0.16, 1, 0.3, 1],
                   }}
                   className="w-full rounded-md border-2 border-[#0F172A]"
-                  style={{ background: isToday ? "var(--t-primary)" : "#FFFFFF" }}
+                  style={{ background: isLast ? "var(--t-primary)" : "#FFFFFF" }}
                 />
               </div>
               <span
                 className={
-                  "text-[10px] font-extrabold " +
-                  (isToday ? "text-[#0F172A]" : "text-[#94A3B8]")
+                  "text-[9.5px] font-extrabold " +
+                  (isLast ? "text-[#0F172A]" : "text-[#94A3B8]")
                 }
               >
-                {d.label[0]}
+                {dense ? bucket.label[0] : bucket.label}
               </span>
             </div>
           );
@@ -142,10 +145,8 @@ function WeeklyTrend({ series, weekOverWeek, delay }) {
 
       <div className="mt-4 h-[2px] w-full bg-[#0F172A]/10" />
       <p className="mt-3 text-[12px] text-[#64748B]">
-        Last week:{" "}
-        <span className="num font-extrabold text-[#0F172A]">
-          {inr(weekOverWeek.lastWk)}
-        </span>
+        {copy.priorLabel}:{" "}
+        <span className="num font-extrabold text-[#0F172A]">{inr(totalPrior)}</span>
       </p>
     </OutlinedCard>
   );
@@ -224,8 +225,8 @@ function Bar({ Icon, label, value, fill, status, color }) {
 }
 
 // ── Invisible spend (warning) ─────────────────────────────────────────
-function InvisibleSpend({ invisible, delay }) {
-  const total = useCountUp(invisible.total, 1.4);
+function InvisibleSpend({ invisible, sub, delay }) {
+  const total = useCountUp(invisible.total, 1.4, [sub]);
 
   return (
     <OutlinedCard className="overflow-hidden p-5" delay={delay}>
@@ -246,7 +247,7 @@ function InvisibleSpend({ invisible, delay }) {
       <p className="num mt-4 text-[32px] font-extrabold leading-none tracking-tight text-[#0F172A]">
         {inr(total)}
       </p>
-      <p className="mt-1 text-[12px] text-[#64748B]">disappeared this week</p>
+      <p className="mt-1 text-[12px] text-[#64748B]">{sub}</p>
 
       {invisible.breakdown.length > 0 && (
         <ul className="mt-4 space-y-2">

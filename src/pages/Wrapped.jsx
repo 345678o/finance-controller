@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ArrowLeft, Share2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, Check, Download, Loader2, Share2 } from "lucide-react";
+import * as htmlToImage from "html-to-image";
 import { useAuraStore } from "@/store/useAuraStore";
 import {
   computeWeeklyStory,
@@ -13,15 +14,16 @@ import StoryCard from "@/components/wrapped/StoryCard";
 import SplitText from "@/components/effects/SplitText";
 import BlurText  from "@/components/effects/BlurText";
 
-/* Real photos from loremflickr — locked seeds so the same photo loads every
-   time, but each story stays topically relevant. CC-licensed Flickr photos. */
+/* Photos served from /public/wrapped/ — same-origin so html-to-image can
+   include them in the share screenshot without canvas-tainting. Originally
+   sourced from loremflickr (CC-licensed Flickr photos), now bundled. */
 const IMAGES = {
-  food:     "https://loremflickr.com/960/600/pizza,delivery,burger?lock=11",
-  hour:     "https://loremflickr.com/960/600/midnight,city,neon?lock=22",
-  merchant: "https://loremflickr.com/960/600/restaurant,delivery,bag?lock=33",
-  impulse:  "https://loremflickr.com/960/600/shopping,bags,boutique?lock=44",
-  streak:   "https://loremflickr.com/960/600/sparklers,celebration,fire?lock=55",
-  saved:    "https://loremflickr.com/960/600/coins,jar,savings?lock=66",
+  food:     "/wrapped/food.jpg",
+  hour:     "/wrapped/hour.jpg",
+  merchant: "/wrapped/merchant.jpg",
+  impulse:  "/wrapped/impulse.jpg",
+  streak:   "/wrapped/streak.jpg",
+  saved:    "/wrapped/saved.jpg",
 };
 
 export default function Wrapped() {
@@ -33,14 +35,69 @@ export default function Wrapped() {
 
   const danger = format12h(story.dangerHour, story.dangerMinute);
 
+  const captureRef = useRef(null);
+  const [shareState, setShareState] = useState("idle"); // idle | preparing | shared | downloaded | failed
+
   const handleShare = async () => {
-    const text = `My AuraLoop week: ${inr(story.totalSaved)} saved · ${story.streak}-day streak · ${story.topMerchant.name} was my top merchant.`;
-    if (navigator.share) {
-      try { await navigator.share({ title: "Aura Wrapped", text }); } catch { /* dismissed */ }
-    } else if (navigator.clipboard) {
-      try { await navigator.clipboard.writeText(text); } catch { /* ignored */ }
+    if (shareState === "preparing") return;
+    setShareState("preparing");
+    const text = `My AuraLoop week: ${inr(story.totalSaved)} saved · ${story.streak}-day streak${story.topMerchant?.name ? ` · ${story.topMerchant.name} was my top merchant` : ""}.`;
+    try {
+      const node = captureRef.current;
+      if (!node) throw new Error("Nothing to capture yet.");
+
+      // Render the wrap section to a PNG blob. Photos live in /public/wrapped
+      // so they're same-origin — no canvas-taint risk, includes them cleanly.
+      const blob = await htmlToImage.toBlob(node, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: getComputedStyle(document.documentElement)
+          .getPropertyValue("--t-bg")
+          .trim() || "#F5F1E8",
+      });
+      if (!blob) throw new Error("Could not generate image.");
+
+      const file = new File([blob], "auraloop-wrap.png", { type: "image/png" });
+
+      // Prefer native share with file. iOS 15+ and Android Chrome support it.
+      if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+        await navigator.share({
+          title: "AuraLoop · this week's wrap",
+          text,
+          files: [file],
+        });
+        setShareState("shared");
+      } else {
+        // Desktop / fallback — save the PNG locally so they can post it.
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "auraloop-wrap.png";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        // Also stash the caption for them to paste with the image.
+        if (navigator.clipboard) {
+          try { await navigator.clipboard.writeText(text); } catch { /* ignored */ }
+        }
+        setShareState("downloaded");
+      }
+    } catch (e) {
+      // AbortError = user dismissed the native sheet, treat as harmless.
+      if (e?.name === "AbortError") {
+        setShareState("idle");
+        return;
+      }
+      console.error("[wrap-share]", e);
+      setShareState("failed");
+    } finally {
+      setTimeout(() => setShareState((s) => (s === "preparing" ? "idle" : s)), 200);
+      setTimeout(() => setShareState("idle"), 2400);
     }
   };
+
+  const sharing = shareState === "preparing";
 
   return (
     <>
@@ -68,12 +125,24 @@ export default function Wrapped() {
 
           <button
             onClick={handleShare}
+            disabled={sharing}
             aria-label="Share"
-            className="grid h-11 w-11 place-items-center rounded-2xl border-2 border-[#0F172A] bg-white shadow-[3px_3px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none"
+            className="grid h-11 w-11 place-items-center rounded-2xl border-2 border-[#0F172A] bg-white shadow-[3px_3px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none disabled:opacity-70"
           >
-            <Share2 size={18} strokeWidth={2.4} className="text-[#0F172A]" />
+            {sharing ? (
+              <Loader2 size={18} strokeWidth={2.4} className="animate-spin text-[#0F172A]" />
+            ) : shareState === "shared" || shareState === "downloaded" ? (
+              <Check size={18} strokeWidth={3} className="text-[#0F172A]" />
+            ) : (
+              <Share2 size={18} strokeWidth={2.4} className="text-[#0F172A]" />
+            )}
           </button>
         </motion.header>
+
+        {/* Capture target — everything inside this wrapper is what gets
+            screenshot when the user shares. Header and closing CTA stay
+            outside so the share image doesn't include UI buttons. */}
+        <div ref={captureRef} className="space-y-5">
 
         {/* Hero — episodic title block */}
         <section className="pt-2">
@@ -174,6 +243,8 @@ export default function Wrapped() {
           />
         </div>
 
+        </div>{/* /capture target */}
+
         {/* Closing card — share */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
@@ -190,9 +261,32 @@ export default function Wrapped() {
           </h3>
           <button
             onClick={handleShare}
-            className="mt-4 w-full rounded-full border-2 border-[#0F172A] bg-[var(--t-primary)] py-3.5 text-[14px] font-extrabold text-[#0F172A] shadow-[4px_4px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-[2px_2px_0_#0F172A]"
+            disabled={sharing}
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[#0F172A] bg-[var(--t-primary)] py-3.5 text-[14px] font-extrabold text-[#0F172A] shadow-[4px_4px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-[2px_2px_0_#0F172A] disabled:opacity-80"
           >
-            Share your wrap
+            {sharing ? (
+              <>
+                <Loader2 size={14} strokeWidth={2.6} className="animate-spin" />
+                Preparing image…
+              </>
+            ) : shareState === "shared" ? (
+              <>
+                <Check size={14} strokeWidth={3} />
+                Shared
+              </>
+            ) : shareState === "downloaded" ? (
+              <>
+                <Download size={14} strokeWidth={2.6} />
+                Saved · caption copied
+              </>
+            ) : shareState === "failed" ? (
+              "Share failed — try again"
+            ) : (
+              <>
+                <Share2 size={14} strokeWidth={2.4} />
+                Share your wrap
+              </>
+            )}
           </button>
         </motion.section>
       </div>

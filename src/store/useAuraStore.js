@@ -73,12 +73,14 @@ export const useAuraStore = create(
       upi: initialUpi,
       profile: initialProfile,
       memeNonce: 0, // bumps on every transactional action — UI uses this to fire memes
+      lastMemeMood: null, // "saved" | "spent" — drives which meme pool the toast pulls from
 
       // ───── actions ─────
       addTransaction: (txn) =>
         set((s) => ({
           transactions: [txn, ...s.transactions],
           memeNonce: s.memeNonce + 1,
+          lastMemeMood: "spent",
         })),
 
       removeTransaction: (id) =>
@@ -93,9 +95,41 @@ export const useAuraStore = create(
             j.id === jarId ? { ...j, saved: Math.min(j.target, j.saved + amount) } : j,
           ),
           memeNonce: s.memeNonce + 1,
+          lastMemeMood: "saved",
         })),
 
-      bumpMeme: () => set((s) => ({ memeNonce: s.memeNonce + 1 })),
+      /* Withdraw from a jar — money you actually spent, taken back out of your
+         savings. Logs a transaction so it shows in spend metrics, and fires
+         the spent-mood meme. The jar's saved amount can never go below zero. */
+      withdrawFromJar: (jarId, amount, meta = {}) =>
+        set((s) => {
+          const safeAmount = Math.max(0, Math.min(amount, s.jars.find((j) => j.id === jarId)?.saved ?? 0));
+          return {
+            jars: s.jars.map((j) =>
+              j.id === jarId ? { ...j, saved: Math.max(0, j.saved - safeAmount) } : j,
+            ),
+            transactions: [
+              {
+                id: `wd_${Date.now()}`,
+                merchant: meta.merchant?.trim() || "Withdrawal",
+                amount: safeAmount,
+                savedAmount: 0,
+                category: meta.category || "Other",
+                paymentMethod: "Jar",
+                vibe: "burn",
+                timestamp: Date.now(),
+                jarId,
+                withdrawal: true,
+              },
+              ...s.transactions,
+            ],
+            memeNonce: s.memeNonce + 1,
+            lastMemeMood: "spent",
+          };
+        }),
+
+      bumpMeme: (mood = null) =>
+        set((s) => ({ memeNonce: s.memeNonce + 1, lastMemeMood: mood })),
 
       removeJar: (jarId) =>
         set((s) => ({ jars: s.jars.filter((j) => j.id !== jarId) })),

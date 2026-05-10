@@ -12,6 +12,7 @@ const VISIBLE_MS = 3800;
 
 export default function MemeToast() {
   const memeNonce = useAuraStore((s) => s.memeNonce);
+  const lastMemeMood = useAuraStore((s) => s.lastMemeMood);
   const lastSeen = useRef(memeNonce);
   const [active, setActive] = useState(null);
   const timerRef = useRef(null);
@@ -19,10 +20,11 @@ export default function MemeToast() {
   useEffect(() => {
     if (memeNonce === lastSeen.current) return; // initial mount, ignore
     lastSeen.current = memeNonce;
-    const meme = pickRandomMeme();
+    const meme = pickRandomMeme(lastMemeMood);
     setActive({ ...meme, key: memeNonce });
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => setActive(null), VISIBLE_MS);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memeNonce]);
 
   useEffect(() => () => clearTimeout(timerRef.current), []);

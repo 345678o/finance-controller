@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Bell, Check, Plus, Sparkles } from "lucide-react";
+import { Bell, Check, Minus, Plus, Sparkles } from "lucide-react";
 import { useAuraStore } from "@/store/useAuraStore";
 import useDashboardData from "@/hooks/useDashboardData";
 import useCountUp from "@/hooks/useCountUp";
@@ -9,6 +9,7 @@ import { inr } from "@/utils/format";
 import CoinJar from "./CoinJar";
 import MoneyRain from "./MoneyRain";
 import AddMoneyModal from "./AddMoneyModal";
+import WithdrawModal from "./WithdrawModal";
 import Avatar from "@/components/profile/Avatar";
 
 /* CheckBalance — Coinly-style light hero.
@@ -37,6 +38,7 @@ export default function CheckBalance() {
   const jars = useAuraStore((s) => s.jars);
   const d = useDashboardData();
   const [addOpen, setAddOpen] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
 
   const primary = useMemo(() => pickPrimaryJar(jars), [jars]);
   const pct = primary ? Math.min(100, Math.round((primary.saved / primary.target) * 100)) : 0;
@@ -147,22 +149,33 @@ export default function CheckBalance() {
                 of {inr(primary.target)} · {pct}%
               </p>
 
-              <button
-                type="button"
-                onClick={() => setAddOpen(true)}
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#0F172A] py-3.5 text-[13.5px] font-extrabold text-[#0F172A] shadow-[3px_3px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none"
-                style={{
-                  background: isFunded ? "var(--t-bg-soft)" : "var(--t-secondary)",
-                }}
-                disabled={isFunded}
-              >
-                {isFunded ? "Goal funded" : (
-                  <>
-                    <Plus size={14} strokeWidth={2.8} />
-                    Add money
-                  </>
-                )}
-              </button>
+              <div className="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAddOpen(true)}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-[#0F172A] py-3.5 text-[13.5px] font-extrabold text-[#0F172A] shadow-[3px_3px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none"
+                  style={{
+                    background: isFunded ? "var(--t-bg-soft)" : "var(--t-secondary)",
+                  }}
+                  disabled={isFunded}
+                >
+                  {isFunded ? "Goal funded" : (
+                    <>
+                      <Plus size={14} strokeWidth={2.8} />
+                      Add money
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWithdrawOpen(true)}
+                  disabled={primary.saved <= 0}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-[#0F172A] bg-[var(--t-card)] py-3.5 text-[13.5px] font-extrabold text-[#0F172A] shadow-[3px_3px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none disabled:bg-[var(--t-bg-soft)] disabled:text-[var(--t-ink-faint)] disabled:shadow-none disabled:cursor-not-allowed"
+                >
+                  <Minus size={14} strokeWidth={2.8} />
+                  Spent it
+                </button>
+              </div>
             </>
           ) : (
             <>
@@ -188,6 +201,11 @@ export default function CheckBalance() {
       <AddMoneyModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
+        jar={primary}
+      />
+      <WithdrawModal
+        open={withdrawOpen}
+        onClose={() => setWithdrawOpen(false)}
         jar={primary}
       />
     </section>
