@@ -79,6 +79,40 @@ export class BankParser {
     if (lower.includes("offer") || lower.includes("discount") || lower.includes("cashback offer") || lower.includes("win "))
       return false;
 
+    // Recharge / streaming / subscription promos. These often contain "paid"
+    // or "purchase" verbs in marketing copy ("pay Rs.49 to get…"), so we have
+    // to filter explicitly — they're not real transactions.
+    if (
+      lower.includes("recharge with") ||
+      lower.includes("recharge of rs") ||
+      lower.includes("to recharge") ||
+      lower.includes("validity:") ||
+      lower.includes(" validity ") ||
+      lower.includes("data benefit") ||
+      lower.includes("talktime") ||
+      lower.includes("talk time") ||
+      lower.includes("unlimited calls") ||
+      lower.includes("free trial") ||
+      lower.includes("subscribe to") ||
+      lower.includes("subscription pack") ||
+      lower.includes("auto-renew") ||
+      lower.includes("auto renew") ||
+      lower.includes("with catch the match") ||
+      lower.includes("catch the match") ||
+      lower.includes("jiohotstar") ||
+      lower.includes("jiotv") ||
+      lower.includes("watch live") ||
+      lower.includes("activate plan") ||
+      lower.includes("plan active till") ||
+      // Pricing-pitch promos: "...at just Rs.449", "for just Rs.99", "starting at"
+      lower.includes("at just rs") ||
+      lower.includes("for just rs") ||
+      lower.includes("just rs.") ||
+      lower.includes("just ₹") ||
+      lower.includes("starting at rs") ||
+      lower.includes("starting from rs")
+    ) return false;
+
     if (
       lower.includes("has requested") ||
       lower.includes("payment request") ||
@@ -255,6 +289,10 @@ export class BankParser {
     if (/^a\/c\s/i.test(name)) return false;          // "A/c XX1234"
     if (/^(?:account|acct)\s/i.test(name)) return false;
     if (/^xx?\d/i.test(name)) return false;            // "XX1234"
+    // Reject pitch-language fragments captured as merchants:
+    //   "just Rs", "just Rs 449", "Just Rs.99", "only Rs 199", "Rs 449", "INR 99"
+    if (/^\s*(?:just|only)?\s*(?:rs\.?|inr|₹)\b[\s.,\d]*$/i.test(name)) return false;
+    if (/^\s*(?:just|only)\b/i.test(name)) return false;
     return /[a-zA-Z]/.test(name) &&
       !common.has(name.toUpperCase()) &&
       !/^\d+$/.test(name) &&
