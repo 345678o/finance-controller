@@ -7,46 +7,85 @@ import { parseEmail } from "./index.js";
  *  - signIn() returns an access token for the gmail.readonly scope
  *  - fetchFamAppMessages(token) returns parsed FamApp transactions
  *
- * Web auth uses Google Identity Services + the gapi script (loaded by the
- * plugin's web companion). Native uses the system Google Sign-In flow.
+ * Web uses Google Identity Services (GIS) directly — modern, COOP-safe.
+ * Native uses the codetrix-studio plugin which talks to the system flow.
  */
 
-let _initPromise = null;
-async function ensureInit() {
-  if (_initPromise) return _initPromise;
-  _initPromise = (async () => {
-    if (Capacitor.getPlatform() === "web") {
-      await GoogleAuth.initialize({
-        clientId: "168214481129-5r32bltirol79r05uhm8psl92k1a12au.apps.googleusercontent.com",
-        scopes: ["profile", "email", "https://www.googleapis.com/auth/gmail.readonly"],
-        grantOfflineAccess: true,
-      });
-    }
-    // Android picks config from capacitor.config.json + strings.xml automatically.
-  })();
-  return _initPromise;
+const CLIENT_ID =
+  "168214481129-5r32bltirol79r05uhm8psl92k1a12au.apps.googleusercontent.com";
+const SCOPES =
+  "profile email https://www.googleapis.com/auth/gmail.readonly";
+
+function isWeb() {
+  return Capacitor.getPlatform() === "web";
+}
+
+function waitForGis(timeoutMs = 5000) {
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    (function tick() {
+      if (window.google?.accounts?.oauth2) return resolve();
+      if (Date.now() - start > timeoutMs)
+        return reject(new Error("Google Identity Services script didn't load"));
+      setTimeout(tick, 80);
+    })();
+  });
+}
+
+async function signInWeb(log) {
+  log("waiting for GIS…");
+  await waitForGis();
+  return new Promise((resolve, reject) => {
+    log("requesting access token…");
+    const tokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: (resp) => {
+        if (resp?.error) {
+          reject(new Error(resp.error_description || resp.error));
+          return;
+        }
+        if (!resp?.access_token) {
+          reject(new Error("no access_token in response"));
+          return;
+        }
+        log(`token acquired (expires in ${resp.expires_in}s)`);
+        resolve({ accessToken: resp.access_token, profile: null });
+      },
+      error_callback: (err) => {
+        reject(new Error(err?.message || err?.type || "GIS error"));
+      },
+    });
+    tokenClient.requestAccessToken({ prompt: "" });
+  });
+}
+
+async function signInNative(log) {
+  await GoogleAuth.initialize({
+    clientId: CLIENT_ID,
+    scopes: ["profile", "email", "https://www.googleapis.com/auth/gmail.readonly"],
+    grantOfflineAccess: true,
+  });
+  log("calling GoogleAuth.signIn()…");
+  const user = await GoogleAuth.signIn();
+  log(`signed in as ${user?.email || "?"}`);
+  const accessToken =
+    user?.authentication?.accessToken || user?.accessToken || null;
+  if (!accessToken) {
+    throw new Error("Sign-in succeeded but no access token returned");
+  }
+  return { accessToken, profile: user };
 }
 
 /**
  * Trigger the Google sign-in flow. Returns { accessToken, profile }.
  */
 export async function signIn(log = () => {}) {
-  await ensureInit();
-  log("calling GoogleAuth.signIn()…");
-  const user = await GoogleAuth.signIn();
-  log(`signed in as ${user?.email || "?"}`);
-  const accessToken =
-    user?.authentication?.accessToken ||
-    user?.accessToken ||
-    null;
-  if (!accessToken) {
-    log(`no access token in response: ${Object.keys(user || {}).join(",")}`);
-    throw new Error("Sign-in succeeded but no access token returned");
-  }
-  return { accessToken, profile: user };
+  return isWeb() ? signInWeb(log) : signInNative(log);
 }
 
 export async function signOut() {
+  if (isWeb()) return; // GIS tokens are short-lived; no global sign-out needed.
   try { await GoogleAuth.signOut(); } catch {}
 }
 

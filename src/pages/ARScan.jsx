@@ -13,6 +13,7 @@ import {
   ScanLine,
   ReceiptText,
   TrendingUp,
+  SwitchCamera,
 } from "lucide-react";
 
 import { useAuraStore } from "@/store/useAuraStore";
@@ -135,6 +136,7 @@ export default function ARScan() {
   const jars = useAuraStore((s) => s.jars);
 
   const [camState, setCamState] = useState("requesting"); // requesting | live | denied | unsupported
+  const [facingMode, setFacingMode] = useState("environment"); // "environment" (rear) | "user" (front)
   const [activeKey, setActiveKey] = useState(null);
   // scanState: idle | locating | estimating | modeling | result
   const [scanState, setScanState] = useState("idle");
@@ -276,9 +278,16 @@ export default function ARScan() {
         setCamState("unsupported");
         return;
       }
+      // Stop any prior stream before starting a new one (camera switch)
+      const prior = streamRef.current;
+      if (prior) {
+        prior.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+      setCamState("requesting");
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
+          video: { facingMode: { ideal: facingMode } },
           audio: false,
         });
         if (cancelled) {
@@ -304,7 +313,7 @@ export default function ARScan() {
       if (stream) stream.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     };
-  }, []);
+  }, [facingMode]);
 
   /* ── Scenario activation ────────────────────────────────────────── */
   function clearScanTimers() {
@@ -478,18 +487,32 @@ export default function ARScan() {
           Future Vision · Live
         </div>
 
-        <button
-          type="button"
-          onClick={() => alert("Receipt OCR is coming next — point at any printed bill.")}
-          aria-label="Scan receipt"
-          className="grid h-10 w-10 place-items-center rounded-full backdrop-blur-md transition active:scale-95"
-          style={{
-            background: "rgba(15, 23, 42, 0.55)",
-            boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12)",
-          }}
-        >
-          <ReceiptText size={17} strokeWidth={2} className="text-[#5EEAD4]" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setFacingMode((m) => (m === "environment" ? "user" : "environment"))}
+            aria-label={facingMode === "environment" ? "Switch to front camera" : "Switch to rear camera"}
+            className="grid h-10 w-10 place-items-center rounded-full backdrop-blur-md transition active:scale-95"
+            style={{
+              background: "rgba(15, 23, 42, 0.55)",
+              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12)",
+            }}
+          >
+            <SwitchCamera size={17} strokeWidth={2} className="text-white/85" />
+          </button>
+          <button
+            type="button"
+            onClick={() => alert("Receipt OCR is coming next — point at any printed bill.")}
+            aria-label="Scan receipt"
+            className="grid h-10 w-10 place-items-center rounded-full backdrop-blur-md transition active:scale-95"
+            style={{
+              background: "rgba(15, 23, 42, 0.55)",
+              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12)",
+            }}
+          >
+            <ReceiptText size={17} strokeWidth={2} className="text-[#5EEAD4]" />
+          </button>
+        </div>
       </div>
 
       {/* ── Hint line (when idle) ─────────────────────────────────── */}
@@ -664,7 +687,7 @@ function InsightCard({ scenario, projection, equivalents, onClose, tiltX, tiltY 
       animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
       exit={{ opacity: 0, y: 14, scale: 0.98, filter: "blur(4px)" }}
       transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-      className="absolute left-1/2 top-[18%] z-20 w-[min(92vw,400px)] -translate-x-1/2 cursor-pointer rounded-3xl p-5 text-left"
+      className="absolute inset-x-0 mx-auto top-[18%] z-20 w-[min(92vw,400px)] cursor-pointer rounded-3xl p-5 text-left"
       style={{
         background: "rgba(15, 23, 42, 0.62)",
         backdropFilter: "blur(22px) saturate(160%)",

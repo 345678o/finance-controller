@@ -78,8 +78,14 @@ export default function ImportEmail() {
       setResults(newResults);
     } catch (e) {
       console.error("[gmail] error:", e);
-      gLog(`ERROR: ${e?.message || String(e)}`);
-      setSignInError(e?.message || String(e));
+      const detail =
+        e?.message ||
+        e?.error ||
+        e?.error_description ||
+        (typeof e === "string" ? e : null) ||
+        (() => { try { return JSON.stringify(e); } catch { return String(e); } })();
+      gLog(`ERROR: ${detail}`);
+      setSignInError(detail);
     } finally {
       setGmailBusy(false);
     }

@@ -16,6 +16,7 @@ import {
   Zap,
   BarChart3,
   MessageSquare,
+  Mail,
 } from "lucide-react";
 
 import useDashboardData from "@/hooks/useDashboardData";
@@ -499,7 +500,8 @@ function RecentActivityCard({ txns }) {
 function QuickActionsCard() {
   const navigate = useNavigate();
   const ACTIONS = [
-    { label: "Import SMS",   icon: MessageSquare, tint: "var(--t-primary)",   to: "/import-sms" },
+    { label: "Import Gmail", icon: Mail,          tint: "var(--t-primary)",   to: "/import-email" },
+    { label: "Import SMS",   icon: MessageSquare, tint: "var(--t-secondary)", to: "/import-sms" },
     { label: "Add jar",      icon: PiggyBank,     tint: "var(--t-secondary)", to: "/jars" },
     { label: "View insights",icon: BarChart3,     tint: "var(--t-accent)",    to: "/insights" },
     { label: "Wrapped",      icon: Sparkles,      tint: "var(--t-lilac)",     to: "/wrapped" },
