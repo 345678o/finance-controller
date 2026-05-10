@@ -157,6 +157,55 @@ export const MEMES = [
     aspect: 1.33,
     mood: "spent",
   },
+
+  // ── More memes — saved mood ─────────────────────────────────────────
+  {
+    id: "expanding-brain-saved",
+    src: "/memes/expanding-brain.jpg",
+    topText: "Tracking spends in a notes app",
+    bottomText: "Letting AuraLoop round up while you live your life",
+    caption: "Galaxy-brain energy.",
+    aspect: 0.87,
+    mood: "saved",
+  },
+  {
+    id: "bonk-doge",
+    src: "/memes/bonk-doge.jpg",
+    topText: "Wanted to buy 5th hoodie",
+    bottomText: "Bonk. Round-up jar instead.",
+    caption: "Self-discipline is a love language.",
+    aspect: 1,
+    mood: "saved",
+  },
+
+  // ── More memes — spent mood ─────────────────────────────────────────
+  {
+    id: "math-lady",
+    src: "/memes/math-lady.jpg",
+    topText: "Tried to budget this month",
+    bottomText: "Where did ₹4,800 go??",
+    caption: "The maths math'd. Then it didn't.",
+    aspect: 1.78,
+    mood: "spent",
+  },
+  {
+    id: "harold",
+    src: "/memes/harold.jpg",
+    topText: "It's fine. Bank balance fine.",
+    bottomText: "I'm fine.",
+    caption: "Smiling through the spending. As one does.",
+    aspect: 1.4,
+    mood: "spent",
+  },
+  {
+    id: "smudge-cat",
+    src: "/memes/smudge-cat.jpg",
+    topText: "Me, fully aware of my spend",
+    bottomText: "*opens checkout anyway*",
+    caption: "The cat understands. The bank does not.",
+    aspect: 1.18,
+    mood: "spent",
+  },
 ];
 
 /** Pick a random meme — optionally filtered to a mood ("saved" / "spent"). */
