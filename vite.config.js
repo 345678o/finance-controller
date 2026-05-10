@@ -82,6 +82,7 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    strictPort: true,    // refuse to silently drift to 5174 — keeps the URL stable
     headers: {
       "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
     },

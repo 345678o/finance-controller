@@ -4,11 +4,16 @@ import { Capacitor } from "@capacitor/core";
 import "./index.css";
 import App from "./App.jsx";
 
-// Inside the Capacitor WebView the assets are bundled in the APK — the
-// vite-plugin-pwa service worker is unnecessary and causes stale JS.
-// Unregister any SW + clear caches at startup on native so the next launch
-// loads fresh code from the APK.
-if (Capacitor.isNativePlatform() && "serviceWorker" in navigator) {
+// Strip any registered service worker + caches in two cases:
+//  - inside Capacitor (we ship JS via APK, the PWA SW just causes stale code)
+//  - in dev mode (a SW left over from a prior `npm run build` would intercept
+//    Vite's HMR and the page goes blank)
+// Production web builds keep their SW intact via the production registerSW.
+const shouldStripSW =
+  (Capacitor.isNativePlatform() && "serviceWorker" in navigator) ||
+  (import.meta.env.DEV && "serviceWorker" in navigator);
+
+if (shouldStripSW) {
   navigator.serviceWorker
     .getRegistrations()
     .then((regs) => regs.forEach((r) => r.unregister()))
