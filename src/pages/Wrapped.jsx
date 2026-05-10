@@ -5,20 +5,24 @@ import { ArrowLeft, Share2 } from "lucide-react";
 import { useAuraStore } from "@/store/useAuraStore";
 import {
   computeWeeklyStory,
-  dailySavingsSeries,
   format12h,
 } from "@/utils/wrapped";
 import { inr } from "@/utils/format";
 
-import StatCard from "@/components/wrapped/StatCard";
-import {
-  BurgerIllustration,
-  ClockIllustration,
-  MerchantTile,
-  BagsIllustration,
-  SparklineIllustration,
-  CoinStackIllustration,
-} from "@/components/wrapped/Illustrations";
+import StoryCard from "@/components/wrapped/StoryCard";
+import SplitText from "@/components/effects/SplitText";
+import BlurText  from "@/components/effects/BlurText";
+
+/* Real photos from loremflickr — locked seeds so the same photo loads every
+   time, but each story stays topically relevant. CC-licensed Flickr photos. */
+const IMAGES = {
+  food:     "https://loremflickr.com/960/600/pizza,delivery,burger?lock=11",
+  hour:     "https://loremflickr.com/960/600/midnight,city,neon?lock=22",
+  merchant: "https://loremflickr.com/960/600/restaurant,delivery,bag?lock=33",
+  impulse:  "https://loremflickr.com/960/600/shopping,bags,boutique?lock=44",
+  streak:   "https://loremflickr.com/960/600/sparklers,celebration,fire?lock=55",
+  saved:    "https://loremflickr.com/960/600/coins,jar,savings?lock=66",
+};
 
 export default function Wrapped() {
   const navigate     = useNavigate();
@@ -26,7 +30,6 @@ export default function Wrapped() {
   const streak       = useAuraStore((s) => s.streak);
 
   const story  = useMemo(() => computeWeeklyStory(transactions, streak), [transactions, streak]);
-  const series = useMemo(() => dailySavingsSeries(transactions, 7), [transactions]);
 
   const danger = format12h(story.dangerHour, story.dangerMinute);
 
@@ -41,10 +44,10 @@ export default function Wrapped() {
 
   return (
     <>
-      <div className="fixed inset-0 bg-[#F5F1E8]" aria-hidden />
+      <div className="fixed inset-0 bg-[var(--t-bg)]" aria-hidden />
 
-      <div className="relative">
-        {/* Top bar — back · title · share, all outlined */}
+      <div className="relative space-y-5 pb-2">
+        {/* Top bar — back · title · share */}
         <motion.header
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -54,7 +57,7 @@ export default function Wrapped() {
           <button
             onClick={() => navigate(-1)}
             aria-label="Back"
-            className="grid h-11 w-11 place-items-center rounded-2xl border-2 border-[#0F172A] bg-[#F5C842] shadow-[3px_3px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none"
+            className="grid h-11 w-11 place-items-center rounded-2xl border-2 border-[#0F172A] bg-[var(--t-primary)] shadow-[3px_3px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none"
           >
             <ArrowLeft size={20} strokeWidth={2.6} className="text-[#0F172A]" />
           </button>
@@ -72,95 +75,134 @@ export default function Wrapped() {
           </button>
         </motion.header>
 
-        {/* Hero subtitle */}
-        <motion.h2
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-5 text-center text-[26px] font-extrabold leading-snug tracking-tight text-[#0F172A]"
-        >
-          Your Financial Story
-          <br />
-          This Week <span className="inline-block">✨</span>
-        </motion.h2>
+        {/* Hero — episodic title block */}
+        <section className="pt-2">
+          <motion.p
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.05 }}
+            className="text-center text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#475569]"
+          >
+            Week {weekOfYear()} · {new Date().getFullYear()}
+          </motion.p>
+          <h2 className="mt-3 text-center text-[30px] md:text-[42px] font-extrabold leading-[1.05] tracking-tight text-[#0F172A]">
+            <SplitText delay={0.15} stagger={0.05}>Your Money,</SplitText>
+            <br />
+            <span
+              className="inline-block rounded-2xl border-2 px-3 py-0.5"
+              style={{
+                borderColor: "#0F172A",
+                background: "var(--t-primary)",
+                boxShadow: "4px 4px 0 #0F172A",
+              }}
+            >
+              <SplitText delay={0.55} stagger={0.05}>this week.</SplitText>
+            </span>
+          </h2>
+          <p className="mt-3 text-center text-[13px] leading-relaxed text-[#475569]">
+            <BlurText delay={0.95}>
+              A short film about your spends, savings, and the moments that
+              quietly shaped both.
+            </BlurText>
+          </p>
+        </section>
 
-        {/* 2x3 grid */}
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <StatCard
-            label="You spent"
-            big={inr(story.foodSpend)}
-            bigColor="#16A34A"
-            sub="on food delivery"
-            illustration={<BurgerIllustration size={64} />}
-            illustrationAlign="center"
-            delay={0.08}
+        {/* Story stack */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <StoryCard
+            label="Food delivery"
+            imageUrl={IMAGES.food}
+            imageAlt="Food delivery"
+            bigValue={inr(story.foodSpend)}
+            caption="Spent on cravings ordered to your door. The kitchen quietly missed you."
+            accent="var(--t-primary)"
+            delay={0.05}
           />
 
-          <StatCard
-            label="Most dangerous spending hour"
-            big={danger.time}
+          <StoryCard
+            label="Most spendy hour"
+            imageUrl={IMAGES.hour}
+            imageAlt="Late night neon"
+            bigValue={danger.time}
             bigSuffix={danger.period}
-            bigColor="#A855F7"
-            illustration={
-              <ClockIllustration
-                hour={story.dangerHour}
-                minute={story.dangerMinute}
-                size={60}
-              />
-            }
-            illustrationAlign="center"
-            delay={0.14}
+            caption="Your wallet's least disciplined moment. Hint: the world is calmer at this hour, your money less so."
+            accent="var(--t-lilac)"
+            delay={0.1}
+            splitBig={false}
           />
 
-          <StatCard
-            label="Top Merchant"
-            big={story.topMerchant.name}
-            bigColor="#0F172A"
-            sub={`${story.topMerchant.count} orders`}
-            illustration={<MerchantTile name={story.topMerchant.name} size={52} />}
-            delay={0.20}
+          <StoryCard
+            label="Top merchant"
+            imageUrl={IMAGES.merchant}
+            imageAlt="Restaurant delivery"
+            bigValue={story.topMerchant.name}
+            caption={`${story.topMerchant.count} order${story.topMerchant.count === 1 ? "" : "s"} this week. They know your name.`}
+            accent="var(--t-secondary)"
+            delay={0.15}
+            splitBig={false}
           />
 
-          <StatCard
+          <StoryCard
             label="Impulse buys"
-            big={inr(story.impulseSpend)}
-            bigColor="#16A34A"
-            sub={`${story.impulsePct}% of total spends`}
-            illustration={<BagsIllustration size={64} />}
-            delay={0.26}
+            imageUrl={IMAGES.impulse}
+            imageAlt="Shopping bags"
+            bigValue={inr(story.impulseSpend)}
+            caption={`That's ${story.impulsePct}% of your week. Future you is taking notes.`}
+            accent="var(--t-accent)"
+            delay={0.2}
           />
 
-          <StatCard
-            label="Savings Streak"
-            big={String(story.streak)}
-            bigColor="#16A34A"
-            sub="days"
-            illustration={<SparklineIllustration values={series} size={48} />}
-            illustrationAlign="center"
-            delay={0.32}
+          <StoryCard
+            label="Saving streak"
+            imageUrl={IMAGES.streak}
+            imageAlt="Sparkler celebration"
+            bigValue={String(story.streak)}
+            bigSuffix="days"
+            caption="Round-ups, every single day. Compound interest is taking notes too."
+            accent="var(--t-secondary)"
+            delay={0.25}
           />
 
-          <StatCard
-            label="Total Saved"
-            big={inr(story.totalSaved)}
-            bigColor="#16A34A"
-            sub="from round-ups"
-            illustration={<CoinStackIllustration size={60} />}
-            delay={0.38}
+          <StoryCard
+            label="Total saved"
+            imageUrl={IMAGES.saved}
+            imageAlt="Coins in a jar"
+            bigValue={inr(story.totalSaved)}
+            caption="Stacked quietly while you spent loudly. This is the part future you reads first."
+            accent="var(--t-primary)"
+            delay={0.3}
           />
         </div>
 
-        {/* Share CTA — mustard outlined pill */}
-        <motion.button
-          onClick={handleShare}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-6 w-full rounded-full border-2 border-[#0F172A] bg-[#F5C842] py-4 text-[14px] font-extrabold text-[#0F172A] shadow-[4px_4px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-[2px_2px_0_#0F172A]"
+        {/* Closing card — share */}
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="overflow-hidden rounded-3xl border-2 border-[#0F172A] bg-white p-5 shadow-[5px_5px_0_#0F172A]"
         >
-          Share Your Wrap
-        </motion.button>
+          <p className="text-[10.5px] font-extrabold uppercase tracking-[0.2em] text-[#475569]">
+            That's a wrap
+          </p>
+          <h3 className="mt-1 text-[22px] font-extrabold leading-tight text-[#0F172A]">
+            Send it to a friend who'd <em className="not-italic" style={{ background: "var(--t-primary)", padding: "0 6px", borderRadius: 6 }}>get it</em>.
+          </h3>
+          <button
+            onClick={handleShare}
+            className="mt-4 w-full rounded-full border-2 border-[#0F172A] bg-[var(--t-primary)] py-3.5 text-[14px] font-extrabold text-[#0F172A] shadow-[4px_4px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-[2px_2px_0_#0F172A]"
+          >
+            Share your wrap
+          </button>
+        </motion.section>
       </div>
     </>
   );
+}
+
+function weekOfYear() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 1);
+  const diff = (now - start) / 86400000;
+  return Math.ceil((diff + start.getDay() + 1) / 7);
 }

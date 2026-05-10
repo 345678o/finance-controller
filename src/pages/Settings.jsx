@@ -1,8 +1,23 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Bell, Coins, EyeOff, Mail, MessageSquare, RotateCcw, Shield, Sparkles, Trash2, Zap } from "lucide-react";
+import {
+  Bell,
+  Coins,
+  EyeOff,
+  Link2,
+  Mail,
+  MessageSquare,
+  RotateCcw,
+  Shield,
+  Sparkles,
+  Trash2,
+  Unplug,
+  Zap,
+} from "lucide-react";
 import { useAuraStore } from "@/store/useAuraStore";
 import { inr } from "@/utils/format";
+import { findUpiApp } from "@/data/upiApps";
 
 import PageHeader from "@/components/common/PageHeader";
 import {
@@ -10,6 +25,8 @@ import {
   StampToggle,
   StampPill,
 } from "@/components/common/Outlined";
+import UPIConnectModal from "@/components/upi/UPIConnectModal";
+import UpiLogo from "@/components/upi/UpiLogo";
 
 const ROUND_UPS = [10, 20, 50];
 
@@ -21,11 +38,17 @@ export default function Settings() {
   const clearAllTransactions  = useAuraStore((s) => s.clearAllTransactions);
   const txnCount              = useAuraStore((s) => s.transactions.length);
   const importedCount         = useAuraStore((s) => s.transactions.filter((t) => !!t.source).length);
+  const upi                   = useAuraStore((s) => s.upi);
+  const updateUpi             = useAuraStore((s) => s.updateUpi);
+  const unlinkUpi             = useAuraStore((s) => s.unlinkUpi);
   const navigate              = useNavigate();
+  const [upiModalOpen, setUpiModalOpen] = useState(false);
+
+  const linkedApp = upi?.linked ? findUpiApp(upi.appId) : null;
 
   return (
     <>
-      <div className="fixed inset-0 bg-[#F5F1E8]" aria-hidden />
+      <div className="fixed inset-0 bg-[var(--t-bg)]" aria-hidden />
 
       <div className="relative space-y-4">
         <PageHeader title="Settings" />
@@ -45,17 +68,91 @@ export default function Settings() {
           </p>
         </motion.section>
 
+        {/* UPI app integration */}
+        <Section
+          delay={0.05}
+          Icon={Link2}
+          iconBg="var(--t-lilac)"
+          title="UPI app"
+          sub={
+            linkedApp
+              ? "Round-ups route through your linked app. Manage permissions here."
+              : "Connect your UPI app so round-ups happen the moment you spend."
+          }
+        >
+          {!linkedApp ? (
+            <button
+              onClick={() => setUpiModalOpen(true)}
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#0F172A] bg-[var(--t-primary)] py-3 text-[13px] font-extrabold text-[#0F172A] shadow-[3px_3px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none"
+            >
+              <Link2 size={14} strokeWidth={2.6} />
+              Connect UPI app
+            </button>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {/* Linked-app summary */}
+              <div className="flex items-center gap-3 rounded-2xl border-2 border-[#0F172A] bg-[var(--t-bg-soft)] p-3">
+                <UpiLogo app={linkedApp} size={40} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-extrabold leading-tight text-[#0F172A]">
+                    {linkedApp.name}
+                  </p>
+                  <p className="num truncate text-[11.5px] text-[#475569]">
+                    {upi.vpa}
+                  </p>
+                </div>
+                <StampPill color="teal">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#0F172A]" />
+                  Linked
+                </StampPill>
+              </div>
+
+              {/* Toggles */}
+              <StampToggle
+                label="Auto-debit round-ups"
+                hint="Use a UPI mandate to push spare change into your top jar"
+                checked={upi.autoDebit}
+                onChange={(v) => updateUpi({ autoDebit: v })}
+              />
+              <div className="h-[2px] w-full bg-[#0F172A]/8" />
+              <StampToggle
+                label="Sync app transactions"
+                hint="Read spend events from your linked UPI app"
+                checked={upi.syncTxns}
+                onChange={(v) => updateUpi({ syncTxns: v })}
+              />
+
+              {/* Switch + unlink row */}
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => setUpiModalOpen(true)}
+                  className="flex-1 rounded-xl border-2 border-[#0F172A] bg-[var(--t-card)] py-2.5 text-[12px] font-extrabold text-[#0F172A] shadow-[2px_2px_0_#0F172A] transition-transform active:translate-y-[1px] active:shadow-none"
+                >
+                  Switch app
+                </button>
+                <button
+                  onClick={unlinkUpi}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-[#0F172A] bg-[var(--t-card)] px-3 py-2.5 text-[12px] font-extrabold text-[#B91C1C] shadow-[2px_2px_0_#0F172A] transition-transform active:translate-y-[1px] active:shadow-none"
+                >
+                  <Unplug size={12} strokeWidth={2.6} />
+                  Unlink
+                </button>
+              </div>
+            </div>
+          )}
+        </Section>
+
         {/* SMS Import */}
         <Section
           delay={0.06}
           Icon={MessageSquare}
-          iconBg="#5DD3CB"
+          iconBg="var(--t-secondary)"
           title="Import from SMS"
           sub="Auto-track real spending from your bank texts. Local, private."
         >
           <button
             onClick={() => navigate("/import-sms")}
-            className="mt-4 w-full rounded-xl border-2 border-[#0F172A] bg-[#F5C842] py-3 text-[13px] font-extrabold text-[#0F172A] shadow-[3px_3px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none"
+            className="mt-4 w-full rounded-xl border-2 border-[#0F172A] bg-[var(--t-primary)] py-3 text-[13px] font-extrabold text-[#0F172A] shadow-[3px_3px_0_#0F172A] transition-transform active:translate-y-[2px] active:shadow-none"
           >
             Scan inbox now
           </button>
@@ -81,7 +178,7 @@ export default function Settings() {
         <Section
           delay={0.08}
           Icon={Coins}
-          iconBg="#F5C842"
+          iconBg="var(--t-primary)"
           title="Round-up rule"
           sub="Each transaction rounds up to the next multiple."
         >
@@ -95,8 +192,8 @@ export default function Settings() {
                   className={
                     "flex-1 rounded-xl border-2 border-[#0F172A] py-3 text-center transition-transform active:translate-y-[1px] " +
                     (active
-                      ? "bg-[#F5C842] shadow-[3px_3px_0_#0F172A]"
-                      : "bg-white hover:bg-[#F5F1E8]")
+                      ? "bg-[var(--t-primary)] shadow-[3px_3px_0_#0F172A]"
+                      : "bg-white hover:bg-[var(--t-bg)]")
                   }
                 >
                   <p className="num text-[18px] font-extrabold tracking-tight text-[#0F172A]">
@@ -115,7 +212,7 @@ export default function Settings() {
         <Section
           delay={0.12}
           Icon={Zap}
-          iconBg="#C4B5FD"
+          iconBg="var(--t-lilac)"
           title="Auto-save"
           sub="Move round-ups into your top jar automatically."
         >
@@ -132,7 +229,7 @@ export default function Settings() {
         <Section
           delay={0.16}
           Icon={Bell}
-          iconBg="#5DD3CB"
+          iconBg="var(--t-secondary)"
           title="Notifications"
           sub="What we ping you about — and what we don't."
         >
@@ -164,7 +261,7 @@ export default function Settings() {
         <Section
           delay={0.20}
           Icon={EyeOff}
-          iconBg="#FF8C7A"
+          iconBg="var(--t-accent)"
           title="Tracking"
           sub="Control what counts towards your aura."
         >
@@ -217,7 +314,7 @@ export default function Settings() {
         <Section
           delay={0.24}
           Icon={Shield}
-          iconBg="#F5F1E8"
+          iconBg="var(--t-bg)"
           title="Privacy"
           sub="All your data lives on this device. Nothing leaves until you say so."
         >
@@ -230,6 +327,11 @@ export default function Settings() {
           </div>
         </Section>
       </div>
+
+      <UPIConnectModal
+        open={upiModalOpen}
+        onClose={() => setUpiModalOpen(false)}
+      />
     </>
   );
 }

@@ -1,0 +1,27 @@
+/* TextCursor — money/coin emoji cursor trail.
+   Positioned as an absolute overlay over its parent (which must be
+   position: relative). pointer-events: none so it never intercepts clicks. */
+
+.text-cursor-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.text-cursor-inner {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.text-cursor-item {
+  position: absolute;
+  user-select: none;
+  white-space: nowrap;
+  font-size: 1.5rem;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.18));
+  will-change: transform, opacity;
+}

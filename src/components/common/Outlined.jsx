@@ -48,7 +48,7 @@ export function TabStrip({ tabs, active, onChange, layoutId = "tab-underline" })
             {isActive && (
               <motion.span
                 layoutId={layoutId}
-                className="absolute -bottom-[2px] left-0 right-0 h-1 rounded-full bg-[#F5C842]"
+                className="absolute -bottom-[2px] left-0 right-0 h-1 rounded-full bg-[var(--t-primary)]"
                 transition={{ type: "spring", stiffness: 360, damping: 30 }}
               />
             )}
@@ -78,7 +78,7 @@ export function StampToggle({ checked, onChange, label, hint }) {
       <span
         className={
           "relative h-7 w-12 shrink-0 rounded-full border-2 border-[#0F172A] transition-colors " +
-          (checked ? "bg-[#F5C842]" : "bg-white")
+          (checked ? "bg-[var(--t-primary)]" : "bg-white")
         }
       >
         <span
@@ -94,11 +94,11 @@ export function StampToggle({ checked, onChange, label, hint }) {
 export function StampPill({ children, color = "white", className = "" }) {
   const bg = {
     white:    "bg-white",
-    mustard:  "bg-[#F5C842]",
-    teal:     "bg-[#5DD3CB]",
-    coral:    "bg-[#FF8C7A]",
-    lavender: "bg-[#C4B5FD]",
-    cream:    "bg-[#F5F1E8]",
+    mustard:  "bg-[var(--t-primary)]",
+    teal:     "bg-[var(--t-secondary)]",
+    coral:    "bg-[var(--t-accent)]",
+    lavender: "bg-[var(--t-lilac)]",
+    cream:    "bg-[var(--t-bg)]",
   }[color];
   return (
     <span
