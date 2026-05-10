@@ -10,7 +10,6 @@ import CoinJar from "./CoinJar";
 import MoneyRain from "./MoneyRain";
 import AddMoneyModal from "./AddMoneyModal";
 import Avatar from "@/components/profile/Avatar";
-import TextCursor from "@/components/effects/TextCursor";
 
 /* CheckBalance — Coinly-style light hero.
    Cream surface with the chunky-contents jar centerpiece, a status pill on
@@ -56,8 +55,6 @@ export default function CheckBalance() {
     <section
       className="relative overflow-hidden rounded-[28px] border-2 border-[#0F172A] bg-[var(--t-bg)] shadow-[5px_5px_0_#0F172A]"
     >
-      {/* Coin trail follows the cursor across the hero card */}
-      <TextCursor text="🪙" spacing={70} maxPoints={6} />
       {/* ── Top bar ──────────────────────────────────────────── */}
       <header className="flex items-center justify-between px-5 pt-5 md:px-7 md:pt-6">
         <div className="flex items-center gap-3">

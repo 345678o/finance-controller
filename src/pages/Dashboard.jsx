@@ -33,6 +33,7 @@ import ShinyText                from "@/components/effects/ShinyText";
 import CheckBalance             from "@/components/dashboard/CheckBalance";
 import MoneyFlow                from "@/components/dashboard/MoneyFlow";
 import SavingsList              from "@/components/dashboard/SavingsList";
+import TextCursor               from "@/components/effects/TextCursor";
 
 const TABS = ["Overview", "Saved", "Spent", "Goals"];
 
@@ -46,7 +47,10 @@ export default function Dashboard() {
   const series = useMemo(() => dailySpendSeries(d.transactions, 7), [d.transactions]);
 
   return (
-    <>
+    <div className="relative">
+      {/* Gold-coin trail follows the cursor across the entire dashboard */}
+      <TextCursor text="🪙" spacing={70} maxPoints={10} />
+
       {/* Mobile header (replaced by TopNav on desktop) */}
       <PageHeader title="Home" />
 
@@ -106,7 +110,7 @@ export default function Dashboard() {
         <RecentActivityCard txns={d.recentTxns} />
         <QuickActionsCard />
       </ScrollReveal>
-    </>
+    </div>
   );
 }
 
