@@ -155,3 +155,4 @@ Switch via the palette icon in the desktop top-nav. Selection persists in localS
 ## 📄 License
 
 MIT — do whatever you like with it.
+# AURALOOP-2.0
